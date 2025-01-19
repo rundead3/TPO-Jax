@@ -1,216 +1,154 @@
-# Uni-Fold: Training your own deep protein-folding models.
+Adding TPO>
 
-This package provides an implementation of a trainable, Transformer-based deep protein folding model. We modified the open-source code of DeepMind AlphaFold v2.0 and provided code to train the model from scratch. See the [reference](https://doi.org/10.1038/s41586-021-03819-2) and the [repository](https://github.com/deepmind/alphafold) of DeepMind AlphaFold v2.0. Free trials of Uni-Fold protein structure prediction service are available at Hermite™, the New-Generation Drug Design Platform Powered by AI, Physics, and Computing Platform developed by DP Technology. (https://hermite.dp.tech/)
 
-## NEWEST!
+Residue Representation
+Residue_constants.py
+Atom positions and bonds in 
+rigid_group_atom_positions
+Chi angles in chi_angles_atoms
+Atom types in residue_atoms
+Bond lengths and angles in stereo_chemical_props.txt
 
-[2022-08-01] We release [Uni-Fold PyTorch](https://github.com/dptech-corp/Uni-Fold) as a thoroughly open-source platform for developing protein models beyond AlphaFold. This repository is now renamed as Uni-Fold-JAX. We released a preprint, [*Uni-Fold: An Open-Source Platform for Developing Protein Folding Models beyond AlphaFold*](https://www.biorxiv.org/content/early/2022/08/06/2022.08.04.502811), about the detailed implementation of Uni-Fold. Come and try the new version!
 
-[2022-05-25] Uni-Fold service on Hermite™ now supports Multimer structure prediction. Come and try at https://hermite.dp.tech/ !
+Feature Generation>
+The features are defined in protein_features.py 
+key tensors:aatype: One-hot encoding of amino acid types (21 classes)
+all_atom_positions: 3D coordinates for each atom
+all_atom_mask: Binary mask for atom presence
 
-[2022-04-22] Uni-Fold is now moved from JAX to PyTorch (Uni-Fold v1.1.0). The performance on CASP14 targets are now at 86% Cα-lDDT, slightly above AlphaFold v2.0. We have not released the PyTorch code yet, while the service on Hermite™ is updated to the newest.
 
-To train your own Uni-Fold models, please follow the steps below:
 
-## 1. Install the environment.
 
-Run the following code to install the dependencies of Uni-Fold:
+Add TPO as a New Residue Type
+We need to extend the residue definitions to include TPO, which is threonine with a phosphate group on OG1.
 
-```bash
-  conda create -n unifold python=3.8.10 -y
-  conda activate unifold
-  ./install_dependencies.sh
-``` 
 
-Uni-Fold has been tested for Python 3.8.10, CUDA 11.1 and OpenMPI 4.1.1. We recommend using Conda >= 4.10 to install the environment: using Conda with lower versions may lead to some conflicts between packages.
+# In residue_constants.py
 
-## 2. Prepare data before training.
+# Add TPO to chi angles definition
+chi_angles_atoms.update({
+    'TPO': [['N', 'CA', 'CB', 'OG1'], ['CA', 'CB', 'OG1', 'P']],
+})
 
-Before you start to train your own folding models, you shall prepare the features and labels of the training proteins. Features of proteins mainly include the amino acid sequence, MSAs and templates of proteins. These messages should be contained in a pickle file `<name>/features.pkl` for each training protein. Uni-Fold provides scripts to process input FASTA files, relying on several external databases and tools. Labels are CIF files containing the structures of the proteins.
+# Add TPO atom positions
+rigid_group_atom_positions.update({
+    'TPO': [
+        ['N', 0, (-0.517, 1.364, 0.000)],
+        ['CA', 0, (0.000, 0.000, 0.000)],
+        ['C', 0, (1.526, 0.000, -0.000)],
+        ['CB', 0, (-0.516, -0.793, -1.215)],
+        ['O', 3, (0.626, 1.062, 0.000)],
+        ['CG2', 4, (0.550, -0.718, -1.228)],
+        ['OG1', 4, (0.472, 1.353, 0.000)],
+        ['P', 5, (0.000, 1.600, 0.000)],  # Phosphate group
+        ['OP1', 5, (0.000, 0.000, 1.500)],  # Phosphate oxygens
+        ['OP2', 5, (0.000, 0.000, -1.500)],
+        ['OP3', 5, (1.500, 0.000, 0.000)],
+    ],
+})
 
-### 2.1 Datasets and external tools.
+# Add TPO to residue atoms
+residue_atoms['TPO'] = ['N', 'CA', 'C', 'CB', 'CG2', 'OG1', 'P', 'OP1', 'OP2', 'OP3', 'O']
 
-Uni-Fold adopts the same data processing pipeline as AlphaFold2. We kept the scripts of downloading corresponding databases for searching sequence homologies and templates in the AlphaFold2 repo. Use the command
+2. Update Feature Generation
 
-```bash
-  bash scripts/download_all_data.sh /path/to/database/directory
-```
+# In protein_features.py
 
-to download all required databases of Uni-Fold.
+FEATURES.update({
+    "aatype": (tf.float32, [NUM_RES, 22]),  # Increase to 22 to include TPO
+    "all_atom_positions": (tf.float32, [NUM_RES, residue_constants.atom_type_num + 4, 3]),  # Add 4 new atoms for phosphate
+    "all_atom_mask": (tf.int64, [NUM_RES, residue_constants.atom_type_num + 4]),
+})
 
-If you successfully installed the Conda environment in Section 1, external tools of search sequence homologies and templates should be installed properly. As an alternative, you can customize the arguments of the feature preparation script (`generate_pkl_features.py`) to refer to your own databases and tools.
 
-### 2.2 Run the preparation code.
+3.Add Chemical Properties
+We need to add TPO's chemical properties to stereo_chemical_props.txt:
+Bond            Residue     Mean        StdDev
+CA-CB           TPO         1.529       0.026
+CB-OG1          TPO         1.428       0.020
+CB-CG2          TPO         1.519       0.033
+OG1-P           TPO         1.576       0.015  # Phosphate bond
+P-OP1           TPO         1.485       0.015
+P-OP2           TPO         1.485       0.015
+P-OP3           TPO         1.485       0.015
+N-CA            TPO         1.459       0.020
+CA-C            TPO         1.525       0.026
+C-O             TPO         1.229       0.019
 
-An example command of running the feature preparation pipeline would be
+Angle           Residue     Mean        StdDev
+N-CA-CB         TPO         110.3       1.9
+CB-CA-C         TPO         111.6       2.7
+CA-CB-OG1       TPO         109.0       2.1
+CA-CB-CG2       TPO         112.4       1.4
+OG1-CB-CG2      TPO         110.0       2.3
+CB-OG1-P        TPO         120.5       2.0
+OG1-P-OP1       TPO         109.5       1.0
+OG1-P-OP2       TPO         109.5       1.0
+OG1-P-OP3       TPO         109.5       1.0
+OP1-P-OP2       TPO         109.5       1.0
+OP1-P-OP3       TPO         109.5       1.0
+OP2-P-OP3       TPO         109.5       1.0
+N-CA-C          TPO         111.0       2.7
+CA-C-O          TPO         120.1       2.1
 
-```bash
-  python generate_pkl_features.py \
-    --fasta_dir ./example_data/fasta \
-    --output_dir ./out \
-    --data_dir /path/to/database/directory \
-    --num_workers 1
-```
 
-This command automatically processes all FASTA files under `fasta_dir`, and dumps the results to `output_dir`. Note that each FASTA file should contain only one sequence. The default number of CPUs used in hhblits and jackhmmer are 4 and 8. You can modify them in `unifold/data/tools/hhblits.py` and `unifold/data/tools/jackhmmer.py`, respectively.
 
-### 2.3 Organize your training data.
 
-Uni-Fold uses the class [`DataSystem`](./unifold/train/data_system.py) to automatically sample and load the training proteins. To make everything goes right, you shall pay attention to how the training data is organized. Two directories should be established, one with input features (`features.pkl` files, referred to as `features_dir`) and the other with labels (`*.cif` files, referred to as `mmcif_dir`). The feature directory should have its files named as `<pdb_id>_<model_id>_<chain_id>/features.pkl`, e.g. `101m_1_A/features.pkl`, and the label directory should have its files named as `<pdb_id>.cif`, e.g. `101m.cif`. See [`./example_data/features`](./example_data/features) and [`./example_data/mmcif`](./example_data/mmcif) for instances of the two directories. Notably, users shall make sure that all proteins used for training have their corresponding labels. This is checked by `DataSystem.check_completeness()`.
 
-## 3. Train Uni-Fold.
 
-### 3.1 Configuration.
-Before you conduct any actual training processes, please make sure that you correctly configured the code. Modify the training configurations in [`unifold/train/train_config.py`](./unifold/train/train_config.py). We annotated the default configurations to reproduce AlphaFold in the script. Specifically, modify the configurations of data paths:
-    
-  ```json
-  "data": {
-    "train": {
-      "features_dir": "where/training/protein/features/are/stored/",
-      "mmcif_dir": "where/training/mmcif/files/are/stored/",
-      "sample_weights": "which/specifies/proteins/for/training.json"
-    },
-    "eval": {
-      "features_dir": "where/validation/protein/features/are/stored/",
-      "mmcif_dir": "where/validation/mmcif/files/are/stored/",
-      "sample_weights": "which/specifies/proteins/for/training.json"
-    }
-  }
-  ```
-  
-  The specified data should be contained in two folders, namely a `features_dir` and a `mmcif_dir`. Organizations of the two directories are introduced in Section 2.3. Meanwhile, if you want to specify a subset of training data under the directories, or assign customized sample weights for each protein, write a json file and feed its path to `sample_weights`. This is optional, as you can leave it as `None` (and the program will attempt to use all entries under `features_dir` with uniform weights). The json file should be a dictionary containing the basenames of directories of protein features ([pdb_id]\_[model_id]\_[chain_id]) and the sample weight of each protein in the training process (integer or float), such as:
 
-  ```json
-  {"1am9_1_C": 82, "1amp_1_A": 291, "1aoj_1_A": 60, "1aoz_1_A": 552}
-  ```
-  or for uniform sampling, simply using a list of protein entries suffices:
 
-  ```json
-  ["1am9_1_C", "1amp_1_A", "1aoj_1_A", "1aoz_1_A"]
-  ```
 
-For users who want to customize their own folding models, configurations of model hyperparameters can be edited in [`unifold/model/config.py`](./unifold/model/config.py) .
 
-### 3.2 Run the training code!
-To train the model on a single node without MPI, run
-```bash
-python train.py
-```
 
-You can also train the model with multiple GPUs using MPI (or workload managers that supports MPI, such as PBS or Slurm) by running:
-```bash
-mpirun -n <num_of_gpus> python train.py
-```
+TRAIN
 
-In either way, make sure you properly configurate the option `use_mpi` and `gpus_per_node` in [`unifold/train/train_config.py`](./unifold/train/train_config.py).
 
-## 4. Infer with trained models.
 
-### 4.1 Infer from features.pkl.
+# Start fresh
+conda deactivate
+conda env remove -n unifolds
+conda create -n unifolds python=3.8.10 -y
+conda activate unifolds
 
-We provide the [`run_from_pkl.py`](./run_from_pkl.py) script to support inferring protein structures from `features.pkl` inputs. A demo command would be
+# Install numpy first at exact version
+pip install numpy==1.19.5
 
-```bash
-python run_from_pkl.py \
-  --pickle_dir ./example_data/features \
-  --model_names unifold \
-  --model_paths /path/to/unifold.npz \
-  --output_dir ./out
-```
+# Install JAX ecosystem in order
+pip install jaxlib==0.1.67+cuda111 -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+pip install jax==0.2.14
+pip install dm-tree==0.1.6
+pip install toolz>=0.9.0
+pip install chex==0.0.7
+pip install dm-haiku==0.0.4
+pip install jmp==0.0.2
 
-or
+# Install remaining dependencies
+pip install tensorflow-cpu==2.5.3
+pip install scipy==1.7.0
+pip install biopython==1.79
+pip install absl-py==0.13.0
+pip install docker==5.0.0
+pip install immutabledict==2.0.0
+pip install ml-collections==0.1.0
 
-```bash
-python run_from_pkl.py \
-  --pickle_paths ./example_data/features/101m_1_A/features.pkl \
-  --model_names unifold \
-  --model_paths /path/to/unifold.npz \
-  --output_dir ./out
-```
+# Install conda packages
+conda install -y -c conda-forge openmm=7.5.1 pdbfixer cudatoolkit=11.1
+conda install -y -c bioconda hmmer hhsuite==3.3.0 kalign2
+conda install -y -c nvidia cudnn==8.0.4
 
-The command will generate structures (in PDB format) from input features predicted by different input models, the running time of each component, and corresponding residue-wise confidence score (predicted LDDT, or pLDDT).
 
-### 4.2 Infer from FASTA files.
 
-Essentially, inferring the structures from given FASTA files includes two steps, i.e. generating the pickled features and predicting structures from them. We provided a script, [`run_from_fasta.py`](./run_from_fasta.py), as a friendlier user interface. An example usage would be
 
-```bash
-python run_from_pkl.py \
-  --fasta_paths ./example_data/fasta/101m_1_A.fasta \
-  --model_names model_2 \
-  --model_paths /path/to/model_2.npz \
-  --data_dir /path/to/database/directory
-  --output_dir ./out
-```
 
-### 4.3 Generate MSAs with MMseqs2.
 
-It may take hours and much memory to generate MSA for sequences, especially for long sequences. In this condition, MMseqs2 may be a more efficient way. It can be used in the following way after it is [installed](https://github.com/soedinglab/mmseqs2/wiki#installation):
 
-```bash
 
-# download and build database
-mkdir mmseqs_db && cd mmseqs_db
-wget http://wwwuser.gwdg.de/~compbiol/colabfold/uniref30_2103.tar.gz
-wget http://wwwuser.gwdg.de/~compbiol/colabfold/colabfold_envdb_202108.tar.gz
-tar xzvf uniref30_2103.tar.gz
-tar xzvf colabfold_envdb_202108.tar.gz
-mmseqs tsv2exprofiledb uniref30_2103 uniref30_2103_db
-mmseqs tsv2exprofiledb colabfold_envdb_202108 colabfold_envdb_202108_db
-mmseqs createindex uniref30_2103_db tmp
-mmseqs createindex colabfold_envdb_202108_db tmp
-cd ..
 
-# MSA search
-./scripts/colabfold_search.sh mmseqs "query.fasta" "mmseqs_db/" "result/" "uniref30_2103_db" "" "colabfold_envdb_202108_db" "1" "0" "1"
 
-```
-## 5. Changes from AlphaFold to Uni-Fold.
 
-- We implemented classes and methods for training and inference pipelines by adding scripts under `unifold/train` and `unifold/inference`.
-- We added scripts for installing the environment, training and inferencing.
-- Files under `unifold/common`, `unifold/data` and `unifold/relax` are minimally altered for re-structuring the repository.
-- Files under `unifold/model` are slightly altered to allow mixed-precision training.
-- We removed some unused scripts in training AlphaFold model.
 
-## 6. License and disclaimer.
 
-### 6.1 Uni-Fold code license.
 
-Copyright 2021 Beijing DP Technology Co., Ltd.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at 
-<http://www.apache.org/licenses/LICENSE-2.0>.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-### 6.2 Use of third-party software.
-
-Use of the third-party software, libraries or code may be governed by separate terms and conditions or license provisions. Your use of the third-party software, libraries or code is subject to any such terms and you should check that you can comply with any applicable restrictions or terms and conditions before use.
-
-### 6.3 Contributing to Uni-Fold.
-
-Uni-Fold is an ongoing project. Our target is to design better protein folding models and to apply them in real scenarios.
-We welcome the community to join us in developing the repository together, including but not limited to 1) reports and fixes of bugs,2) new features and 3) better interfaces. Please refer to [`CONTRIBUTING.md`](./CONTRIBUTING.md) for more information.
-
-### 6.4 Cite this work.
-
-If you use the code or the web service of Uni-Fold-JAX, please cite
-
-```bibtex
-@article {uni-fold,
-	author = {Li, Ziyao and Liu, Xuyang and Chen, Weijie and Shen, Fan and Bi, Hangrui and Ke, Guolin and Zhang, Linfeng},
-	title = {Uni-Fold: An Open-Source Platform for Developing Protein Folding Models beyond AlphaFold},
-	year = {2022},
-	doi = {10.1101/2022.08.04.502811},
-	URL = {https://www.biorxiv.org/content/early/2022/08/06/2022.08.04.502811},
-	eprint = {https://www.biorxiv.org/content/early/2022/08/06/2022.08.04.502811.full.pdf},
-	journal = {bioRxiv}
-}
-```
