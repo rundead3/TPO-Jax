@@ -1,5 +1,7 @@
 # Adding TPO
 
+Add TPO as a New Residue Type
+We need to extend the residue definitions to include TPO, which is threonine with a phosphate group on OG1.
 
 Residue Representation (Uni-Fold-jax/unifold/common/residue_constants.py)
 Atom positions and bonds in (rigid_group_atom_positions)
@@ -17,8 +19,6 @@ all_atom_mask: Binary mask for atom presence
 
 
 
-Add TPO as a New Residue Type
-We need to extend the residue definitions to include TPO, which is threonine with a phosphate group on OG1.
 
 
 # In residue_constants.py
