@@ -17,7 +17,7 @@ all_atom_positions: 3D coordinates for each atom
 all_atom_mask: Binary mask for atom presence
 
 
-
+extra: add TPO's chemical properties to stereo_chemical_props.txt
 
 
 
