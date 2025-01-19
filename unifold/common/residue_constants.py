@@ -54,6 +54,7 @@ chi_angles_atoms = {
     'PRO': [['N', 'CA', 'CB', 'CG'], ['CA', 'CB', 'CG', 'CD']],
     'SER': [['N', 'CA', 'CB', 'OG']],
     'THR': [['N', 'CA', 'CB', 'OG1']],
+    'TPO': [['N', 'CA', 'CB', 'OG1'], ['CA', 'CB', 'OG1', 'P']],
     'TRP': [['N', 'CA', 'CB', 'CG'], ['CA', 'CB', 'CG', 'CD1']],
     'TYR': [['N', 'CA', 'CB', 'CG'], ['CA', 'CB', 'CG', 'CD1']],
     'VAL': [['N', 'CA', 'CB', 'CG1']],
@@ -79,6 +80,7 @@ chi_angles_mask = [
     [1.0, 1.0, 0.0, 0.0],  # PRO
     [1.0, 0.0, 0.0, 0.0],  # SER
     [1.0, 0.0, 0.0, 0.0],  # THR
+    [1.0, 1.0, 0.0, 0.0],  # TPO
     [1.0, 1.0, 0.0, 0.0],  # TRP
     [1.0, 1.0, 0.0, 0.0],  # TYR
     [1.0, 0.0, 0.0, 0.0],  # VAL
@@ -292,6 +294,19 @@ rigid_group_atom_positions = {
         ['CG2', 4, (0.550, -0.718, -1.228)],
         ['OG1', 4, (0.472, 1.353, 0.000)],
     ],
+    'TPO': [
+        ['N', 0, (-0.517, 1.364, 0.000)],
+        ['CA', 0, (0.000, 0.000, 0.000)],
+        ['C', 0, (1.526, 0.000, -0.000)],
+        ['CB', 0, (-0.516, -0.793, -1.215)],
+        ['O', 3, (0.626, 1.062, 0.000)],
+        ['CG2', 4, (0.550, -0.718, -1.228)],
+        ['OG1', 4, (0.472, 1.353, 0.000)],
+        ['P', 5, (0.755, 1.093, 0.000)],
+        ['O1P', 5, (0.607, 1.095, -0.000)],
+        ['O2P', 5, (0.589, -1.104, -0.001)],
+        ['O3P', 5, (0.634, 1.060, 0.000)],
+    ],
     'TRP': [
         ['N', 0, (-0.521, 1.363, 0.000)],
         ['CA', 0, (0.000, 0.000, 0.000)],
@@ -352,6 +367,7 @@ residue_atoms = {
     'PRO': ['C', 'CA', 'CB', 'CG', 'CD', 'N', 'O'],
     'SER': ['C', 'CA', 'CB', 'N', 'O', 'OG'],
     'THR': ['C', 'CA', 'CB', 'CG2', 'N', 'O', 'OG1'],
+    'TPO': ['C', 'CA', 'CB', 'CG2', 'N', 'O', 'OG1', 'P', 'O1P', 'O2P', 'O3P'],
     'TRP': ['C', 'CA', 'CB', 'CG', 'CD1', 'CD2', 'CE2', 'CE3', 'CZ2', 'CZ3',
             'CH2', 'N', 'NE1', 'O'],
     'TYR': ['C', 'CA', 'CB', 'CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ', 'N', 'O',
@@ -466,8 +482,8 @@ def load_stereo_chemical_props() -> Tuple[Mapping[str, List[Bond]],
       dl_db1 = (2 * bond1.length - 2 * bond2.length * np.cos(gamma)) * dl_outer
       dl_db2 = (2 * bond2.length - 2 * bond1.length * np.cos(gamma)) * dl_outer
       stddev = np.sqrt((dl_dgamma * ba.stddev)**2 +
-                       (dl_db1 * bond1.stddev)**2 +
-                       (dl_db2 * bond2.stddev)**2)
+               (dl_db1 * bond1.stddev)**2 +
+               (dl_db2 * bond2.stddev)**2)
       residue_virtual_bonds[resname].append(
           Bond(ba.atom1_name, ba.atom3name, length, stddev))
 
@@ -504,24 +520,24 @@ restype_name_to_atom14_names = {
     'ARG': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  'NE',  'CZ',  'NH1', 'NH2', '',    '',    ''],
     'ASN': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'OD1', 'ND2', '',    '',    '',    '',    '',    ''],
     'ASP': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'OD1', 'OD2', '',    '',    '',    '',    '',    ''],
-    'CYS': ['N', 'CA', 'C', 'O', 'CB', 'SG',  '',    '',    '',    '',    '',    '',    '',    ''],
-    'GLN': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  'OE1', 'NE2', '',    '',    '',    '',    ''],
-    'GLU': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  'OE1', 'OE2', '',    '',    '',    '',    ''],
+    'CYS': ['N', 'CA', 'C', 'O', 'CB', 'SG',  '',    '',    '',    '',    '',    '',    ''],
+    'GLN': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  'OE1', 'NE2', '',    '',    '',    ''],
+    'GLU': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  'OE1', 'OE2', '',    '',    '',    ''],
     'GLY': ['N', 'CA', 'C', 'O', '',   '',    '',    '',    '',    '',    '',    '',    '',    ''],
-    'HIS': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'ND1', 'CD2', 'CE1', 'NE2', '',    '',    '',    ''],
-    'ILE': ['N', 'CA', 'C', 'O', 'CB', 'CG1', 'CG2', 'CD1', '',    '',    '',    '',    '',    ''],
+    'HIS': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'ND1', 'CD2', 'CE1', 'NE2', '',    '',    ''],
+    'ILE': ['N', 'CA', 'C', 'O', 'CB', 'CG1', 'CG2', 'CD1', '',    '',    '',    '',    ''],
     'LEU': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD1', 'CD2', '',    '',    '',    '',    '',    ''],
-    'LYS': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  'CE',  'NZ',  '',    '',    '',    '',    ''],
-    'MET': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'SD',  'CE',  '',    '',    '',    '',    '',    ''],
+    'LYS': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  'CE',  'NZ',  '',    '',    '',    ''],
+    'MET': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'SD',  'CE',  '',    '',    '',    '',    ''],
     'PHE': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD1', 'CD2', 'CE1', 'CE2', 'CZ',  '',    '',    ''],
-    'PRO': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  '',    '',    '',    '',    '',    '',    ''],
-    'SER': ['N', 'CA', 'C', 'O', 'CB', 'OG',  '',    '',    '',    '',    '',    '',    '',    ''],
-    'THR': ['N', 'CA', 'C', 'O', 'CB', 'OG1', 'CG2', '',    '',    '',    '',    '',    '',    ''],
+    'PRO': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD',  '',    '',    '',    '',    '',    ''],
+    'SER': ['N', 'CA', 'C', 'O', 'CB', 'OG',  '',    '',    '',    '',    '',    '',    ''],
+    'THR': ['N', 'CA', 'C', 'O', 'CB', 'OG1', 'CG2', '',    '',    '',    '',    '',    ''],
+    'TPO': ['N', 'CA', 'C', 'O', 'CB', 'OG1', 'CG2', 'P',   'O1P', 'O2P', 'O3P', '',    '',    ''],
     'TRP': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD1', 'CD2', 'NE1', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2'],
     'TYR': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD1', 'CD2', 'CE1', 'CE2', 'CZ',  'OH',  '',    ''],
-    'VAL': ['N', 'CA', 'C', 'O', 'CB', 'CG1', 'CG2', '',    '',    '',    '',    '',    '',    ''],
-    'UNK': ['',  '',   '',  '',  '',   '',    '',    '',    '',    '',    '',    '',    '',    ''],
-
+    'VAL': ['N', 'CA', 'C', 'O', 'CB', 'CG1', 'CG2', '',    '',    '',    '',    '',    ''],
+    'UNK': ['',  '',   '',  '',  '',   '',    '',    '',    '',    '',    '',    ''],
 }
 # pylint: enable=line-too-long
 # pylint: enable=bad-whitespace
@@ -531,10 +547,10 @@ restype_name_to_atom14_names = {
 # Reproduce it by taking 3-letter AA codes and sorting them alphabetically.
 restypes = [
     'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P',
-    'S', 'T', 'W', 'Y', 'V'
+    'S', 'T', 'W', 'Y', 'V', 'X'  # X for TPO
 ]
 restype_order = {restype: i for i, restype in enumerate(restypes)}
-restype_num = len(restypes)  # := 20.
+restype_num = len(restypes)  # := 21.
 unk_restype_index = restype_num  # Catch-all index for unknown restypes.
 
 restypes_with_x = restypes + ['X']
@@ -605,6 +621,7 @@ restype_1to3 = {
     'W': 'TRP',
     'Y': 'TYR',
     'V': 'VAL',
+    'X': 'TPO',  # Map X to TPO
 }
 
 
@@ -695,8 +712,8 @@ def _make_standard_atom_mask() -> np.ndarray:
   # +1 to account for unknown (all 0s).
   mask = np.zeros([restype_num + 1, atom_type_num], dtype=np.int32)
   for restype, restype_letter in enumerate(restypes):
-    restype_name = restype_1to3[restype_letter]
-    atom_names = residue_atoms[restype_name]
+    resname = restype_1to3[restype_letter]
+    atom_names = residue_atoms[resname]
     for atom_name in atom_names:
       atom_type = atom_order[atom_name]
       mask[restype, atom_type] = 1
