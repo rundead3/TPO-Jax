@@ -1,18 +1,16 @@
 Adding TPO>
 
 
-Residue Representation
-Residue_constants.py
-Atom positions and bonds in 
-rigid_group_atom_positions
-Chi angles in chi_angles_atoms
-Atom types in residue_atoms
-Bond lengths and angles in stereo_chemical_props.txt
+Residue Representation (Uni-Fold-jax/unifold/common/residue_constants.py)
+Atom positions and bonds in (rigid_group_atom_positions)
+Chi angles (chi_angles_atoms)
+Atom types (residue_atoms)
+
+Bond lengths and angles (unifold/common/stereo_chemical_props.txt)
 
 
-Feature Generation>
-The features are defined in protein_features.py 
-key tensors:aatype: One-hot encoding of amino acid types (21 classes)
+Feature Generation (unifold/model/tf/protein_features.py )
+aatype: One-hot encoding of amino acid types (21 classes)
 all_atom_positions: 3D coordinates for each atom
 all_atom_mask: Binary mask for atom presence
 
@@ -101,7 +99,7 @@ CA-C-O          TPO         120.1       2.1
 
 
 
-TRAIN
+TRAIN  ( unfinished, CUDA requirements from my 4070 clashing with old packages )
 
 
 
