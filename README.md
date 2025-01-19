@@ -111,8 +111,39 @@ van_der_waals_radius = {
 
 Data Files:
 Updated stereo_chemical_props.txt to include TPO bond lengths and angles
-
-
+```
+Bond
+C-O			TPO		1.229		0.019
+CA-CB			TPO		1.529		0.026
+CB-OG1			TPO		1.428		0.020
+CB-CG2			TPO		1.519		0.033
+N-CA			TPO		1.459		0.020
+CA-C			TPO		1.525		0.026
+C-O			TPO		1.229		0.019
+OG1-P			TPO		1.428		0.020
+P-O1P			TPO		1.485		0.033
+P-O2P			TPO		1.485		0.020
+P-O3P			TPO		1.485		0.026
+```
+```
+Angle        Residue     Mean    StdDev
+N-CA-CB      TPO         110.3   1.9
+CB-CA-C      TPO         111.6   2.7
+CA-CB-OG1    TPO         109.0   2.1
+CA-CB-CG2    TPO         112.4   1.4
+OG1-CB-CG2   TPO         110.0   2.3
+N-CA-C       TPO         111.0   2.7
+CA-C-O       TPO         120.1   2.1
+```
+```
+CB-OG1-P			TPO		120.5		2.0
+OG1-P-O1P			TPO		108.2		2.0
+OG1-P-O2P		TPO		108.2		2.0
+OG1-P-O3P		TPO		108.2		2.0
+O1P-P-O2P		TPO		119.6		2.0
+O2P-P-O3P		TPO		119.6		2.0
+O1P-P-O3P		TPO		119.6		2.0
+```
 
 
 # TRAIN  ( unfinished, CUDA requirements from my 4070 clashing with old packages )
