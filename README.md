@@ -3,12 +3,63 @@
 Essential Changes:
 
 Add TPO to chi_angles_atoms (✓ already done)
+```
+chi_angles_atoms = {
+    # ... other residues ...
+    'TPO': [['N', 'CA', 'CB', 'OG1'],  # Chi1 - same as THR
+            ['CA', 'CB', 'OG1', 'P']],  # Chi2 - new rotation around OG1-P bond
+    # ... other residues ...
+}
+```
+
 Add TPO to chi_angles_mask (✓ already done)
+```
+chi_angles_mask = [
+    # ... other residues ...
+    [1.0, 1.0, 0.0, 0.0],  # TPO - has two chi angles (Chi1 and Chi2)
+    # ... other residues ...
+]
+```
+
 Add TPO to chi_pi_periodic (✓ already done)
+```
+chi_pi_periodic = [
+    # ... other residues ...
+    [0.0, 0.0, 0.0, 0.0],  # TPO - neither chi1 nor chi2 are pi periodic
+    # ... other residues ...
+]
+```
 Add TPO to rigid_group_atom_positions (✓ already done)
+```
+rigid_group_atom_positions = {
+    # ... other residues ...
+    'TPO': [
+        ['N', 0, (-0.517, 1.364, 0.000)],
+        ['CA', 0, (0.000, 0.000, 0.000)],
+        ['C', 0, (1.526, 0.000, -0.000)],
+        ['CB', 0, (-0.516, -0.793, -1.215)],
+        ['O', 3, (0.626, 1.062, 0.000)],
+        ['CG2', 4, (0.550, -0.718, -1.228)],
+        ['OG1', 4, (0.472, 1.353, 0.000)],
+        ['P', 5, (0.755, 1.093, 0.000)],       # New phosphate group atoms
+        ['O1P', 5, (0.607, 1.095, -0.000)],    # in the 5th rigid group
+        ['O2P', 5, (0.589, -1.104, -0.001)],
+        ['O3P', 5, (0.634, 1.060, 0.000)],
+    ],
+    # ... other residues ...
+}
+```
 Add TPO to residue_atoms (✓ already done)
+```
+residue_atoms = {
+    # ... other residues ...
+    'TPO': ['C', 'CA', 'CB', 'CG2', 'N', 'O', 'OG1', 'P', 'O1P', 'O2P', 'O3P'],
+    # ... other residues ...
+}
+```
 Update atom_types to include P, O1P, O2P, O3P atoms (✓ already done)
-```atom_types = [
+```
+atom_types = [
     'N', 'CA', 'C', 'CB', 'O', 'CG', 'CG1', 'CG2', 'OG', 'OG1', 'SG', 'CD',
     'CD1', 'CD2', 'ND1', 'ND2', 'OD1', 'OD2', 'SD', 'CE', 'CE1', 'CE2', 'CE3',
     'NE', 'NE1', 'NE2', 'OE1', 'OE2', 'CH2', 'NH1', 'NH2', 'OH', 'CZ', 'CZ2',
