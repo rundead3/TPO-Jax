@@ -1,4 +1,4 @@
-Adding TPO>
+# Adding TPO>
 
 
 Residue Representation (Uni-Fold-jax/unifold/common/residue_constants.py)
@@ -23,12 +23,12 @@ We need to extend the residue definitions to include TPO, which is threonine wit
 
 # In residue_constants.py
 
-# Add TPO to chi angles definition
+.Add TPO to chi angles definition
 chi_angles_atoms.update({
     'TPO': [['N', 'CA', 'CB', 'OG1'], ['CA', 'CB', 'OG1', 'P']],
 })
 
-# Add TPO atom positions
+.Add TPO atom positions
 rigid_group_atom_positions.update({
     'TPO': [
         ['N', 0, (-0.517, 1.364, 0.000)],
@@ -45,7 +45,7 @@ rigid_group_atom_positions.update({
     ],
 })
 
-# Add TPO to residue atoms
+.Add TPO to residue atoms
 residue_atoms['TPO'] = ['N', 'CA', 'C', 'CB', 'CG2', 'OG1', 'P', 'OP1', 'OP2', 'OP3', 'O']
 
 2. Update Feature Generation
@@ -103,7 +103,7 @@ TRAIN  ( unfinished, CUDA requirements from my 4070 clashing with old packages )
 
 
 
-# Start fresh
+###### Start fresh
 conda deactivate
 conda env remove -n unifolds
 conda create -n unifolds python=3.8.10 -y
