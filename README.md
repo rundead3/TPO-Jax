@@ -51,9 +51,9 @@ rigid_group_atom_positions.update({
 
 residue_atoms['TPO'] = ['N', 'CA', 'C', 'CB', 'CG2', 'OG1', 'P', 'OP1', 'OP2', 'OP3', 'O']
 
-2. Update Feature Generation
+#Update Feature Generation
 
-# In protein_features.py
+In protein_features.py
 
 FEATURES.update({
     "aatype": (tf.float32, [NUM_RES, 22]),  # Increase to 22 to include TPO
