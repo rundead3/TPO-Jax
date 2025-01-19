@@ -1,113 +1,56 @@
-# Adding TPO
+# Define TPO in residue_constants.py 
 
-Add TPO as a New Residue Type
-We need to extend the residue definitions to include TPO, which is threonine with a phosphate group on OG1.
+Essential Changes:
 
-Residue Representation (Uni-Fold-jax/unifold/common/residue_constants.py)
-Atom positions and bonds in (rigid_group_atom_positions)
-Chi angles (chi_angles_atoms)
-Atom types (residue_atoms)
+Add TPO to chi_angles_atoms (✓ already done)
+Add TPO to chi_angles_mask (✓ already done)
+Add TPO to chi_pi_periodic (✓ already done)
+Add TPO to rigid_group_atom_positions (✓ already done)
+Add TPO to residue_atoms (✓ already done)
+Update atom_types to include P, O1P, O2P, O3P atoms (✓ already done)
+```atom_types = [
+    'N', 'CA', 'C', 'CB', 'O', 'CG', 'CG1', 'CG2', 'OG', 'OG1', 'SG', 'CD',
+    'CD1', 'CD2', 'ND1', 'ND2', 'OD1', 'OD2', 'SD', 'CE', 'CE1', 'CE2', 'CE3',
+    'NE', 'NE1', 'NE2', 'OE1', 'OE2', 'CH2', 'NH1', 'NH2', 'OH', 'CZ', 'CZ2',
+    'CZ3', 'NZ', 'OXT', 'P', 'O1P', 'O2P', 'O3P'  # Added phosphate atoms
+]
+atom_order = {atom_type: i for i, atom_type in enumerate(atom_types)}
+atom_type_num = len(atom_types)
+```
+Update restype mappings (✓ already done)
+```
+restypes = [
+    'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P',
+    'S', 'T', 'W', 'Y', 'V', 'X'  # X for TPO
+]
+restype_order = {restype: i for i, restype in enumerate(restypes)}
+restype_num = len(restypes)  # := 21
+unk_restype_index = restype_num  # Catch-all index for unknown restypes
+```
 
+Add TPO to restype_name_to_atom14_names (✓ already done) 
+```
+restype_name_to_atom14_names = {
+    # ... (existing entries)
+    'TPO': ['N', 'CA', 'C', 'O', 'CB', 'OG1', 'CG2', 'P', 'O1P', 'O2P', 'O3P', '', '', ''],
+    # ... (rest of existing entries)
+}
+```
+Add TPO to restype_1to3 (which by extension adds it to restype_3to1 mappings (✓ already done)
+```
+restype_1to3 = {
+    'A': 'ALA',
+    # ... (existing mappings)
+    'V': 'VAL',
+    'X': 'TPO',  # Map X to TPO
+}
 
+restype_3to1 = {v: k for k, v in restype_1to3.items()}
+```
+Add van_der_waals_radius for P atom (✓ already done)
 
-Feature Generation (unifold/model/tf/protein_features.py )
-aatype: One-hot encoding of amino acid types (21 classes)
-all_atom_positions: 3D coordinates for each atom
-all_atom_mask: Binary mask for atom presence
-
-Bond lengths and angles (unifold/common/stereo_chemical_props.txt)
-
-Quick summary :
-Added TPO to chi_angles_atoms with its chi angles definition
-Added TPO to chi_angles_mask with appropriate masking
-Added TPO to residue_atoms with its complete set of atoms
-Added TPO to restype_name_to_atom14_names with its 14-column atom representation
-Added TPO to rigid_group_atom_positions with its atom positions
-Added 'X' to restypes to represent TPO and updated restype_1to3 mapping
-
-
-
-# In residue_constants.py
-
-##Add TPO to chi angles definition
-
-chi_angles_atoms.update({
-    'TPO': [['N', 'CA', 'CB', 'OG1'], ['CA', 'CB', 'OG1', 'P']],
-})
-
-##Add TPO atom positions
-
-rigid_group_atom_positions.update({
-    'TPO': [
-        ['N', 0, (-0.517, 1.364, 0.000)],
-        ['CA', 0, (0.000, 0.000, 0.000)],
-        ['C', 0, (1.526, 0.000, -0.000)],
-        ['CB', 0, (-0.516, -0.793, -1.215)],
-        ['O', 3, (0.626, 1.062, 0.000)],
-        ['CG2', 4, (0.550, -0.718, -1.228)],
-        ['OG1', 4, (0.472, 1.353, 0.000)],
-        ['P', 5, (0.000, 1.600, 0.000)],  # Phosphate group
-        ['OP1', 5, (0.000, 0.000, 1.500)],  # Phosphate oxygens
-        ['OP2', 5, (0.000, 0.000, -1.500)],
-        ['OP3', 5, (1.500, 0.000, 0.000)],
-    ],
-})
-
-##Add TPO to residue atoms
-
-residue_atoms['TPO'] = ['N', 'CA', 'C', 'CB', 'CG2', 'OG1', 'P', 'OP1', 'OP2', 'OP3', 'O']
-
-#Update Feature Generation
-
-In protein_features.py
-
-FEATURES.update({
-    "aatype": (tf.float32, [NUM_RES, 22]),  # Increase to 22 to include TPO
-    "all_atom_positions": (tf.float32, [NUM_RES, residue_constants.atom_type_num + 4, 3]),  # Add 4 new atoms for phosphate
-    "all_atom_mask": (tf.int64, [NUM_RES, residue_constants.atom_type_num + 4]),
-})
-
-
-# Add Chemical Properties
-
-We need to add TPO's chemical properties to stereo_chemical_props.txt:
-
-
-
-Bond            Residue     Mean        StdDev
-CA-CB           TPO         1.529       0.026
-CB-OG1          TPO         1.428       0.020
-CB-CG2          TPO         1.519       0.033
-OG1-P           TPO         1.576       0.015  # Phosphate bond
-P-OP1           TPO         1.485       0.015
-P-OP2           TPO         1.485       0.015
-P-OP3           TPO         1.485       0.015
-N-CA            TPO         1.459       0.020
-CA-C            TPO         1.525       0.026
-C-O             TPO         1.229       0.019
-
-Angle           Residue     Mean        StdDev
-N-CA-CB         TPO         110.3       1.9
-CB-CA-C         TPO         111.6       2.7
-CA-CB-OG1       TPO         109.0       2.1
-CA-CB-CG2       TPO         112.4       1.4
-OG1-CB-CG2      TPO         110.0       2.3
-CB-OG1-P        TPO         120.5       2.0
-OG1-P-OP1       TPO         109.5       1.0
-OG1-P-OP2       TPO         109.5       1.0
-OG1-P-OP3       TPO         109.5       1.0
-OP1-P-OP2       TPO         109.5       1.0
-OP1-P-OP3       TPO         109.5       1.0
-OP2-P-OP3       TPO         109.5       1.0
-N-CA-C          TPO         111.0       2.7
-CA-C-O          TPO         120.1       2.1
-
-
-
-
-
-
-
+Data Files:
+Updated stereo_chemical_props.txt to include TPO bond lengths and angles
 
 
 
