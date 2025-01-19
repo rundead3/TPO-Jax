@@ -8,7 +8,6 @@ Atom positions and bonds in (rigid_group_atom_positions)
 Chi angles (chi_angles_atoms)
 Atom types (residue_atoms)
 
-Bond lengths and angles (unifold/common/stereo_chemical_props.txt)
 
 
 Feature Generation (unifold/model/tf/protein_features.py )
@@ -16,8 +15,15 @@ aatype: One-hot encoding of amino acid types (21 classes)
 all_atom_positions: 3D coordinates for each atom
 all_atom_mask: Binary mask for atom presence
 
+Bond lengths and angles (unifold/common/stereo_chemical_props.txt)
 
-extra: add TPO's chemical properties to stereo_chemical_props.txt
+Quick summary :
+Added TPO to chi_angles_atoms with its chi angles definition
+Added TPO to chi_angles_mask with appropriate masking
+Added TPO to residue_atoms with its complete set of atoms
+Added TPO to restype_name_to_atom14_names with its 14-column atom representation
+Added TPO to rigid_group_atom_positions with its atom positions
+Added 'X' to restypes to represent TPO and updated restype_1to3 mapping
 
 
 
