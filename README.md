@@ -99,6 +99,15 @@ restype_1to3 = {
 restype_3to1 = {v: k for k, v in restype_1to3.items()}
 ```
 Add van_der_waals_radius for P atom (✓ already done)
+```
+van_der_waals_radius = {
+    'C': 1.7,
+    'N': 1.55,
+    'O': 1.52,
+    'S': 1.8,
+    'P': 1.8,  # Phosphorus has similar vdW radius to Sulfur
+}
+```
 
 Data Files:
 Updated stereo_chemical_props.txt to include TPO bond lengths and angles
