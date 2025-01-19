@@ -65,6 +65,9 @@ FEATURES.update({
 # Add Chemical Properties
 
 We need to add TPO's chemical properties to stereo_chemical_props.txt:
+
+
+
 Bond            Residue     Mean        StdDev
 CA-CB           TPO         1.529       0.026
 CB-OG1          TPO         1.428       0.020
