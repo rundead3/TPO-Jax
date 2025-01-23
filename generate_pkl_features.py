@@ -85,6 +85,8 @@ flags.DEFINE_integer('random_seed', None,
                      'processes like GPU inference are nondeterministic.')
 flags.DEFINE_integer('num_workers', 1, 'Number of parallel workers.')
 
+flags.DEFINE_string('small_bfd_database_path', None,
+                   'Path to the Small BFD database for use by HHblits.')
 FLAGS = flags.FLAGS
 
 MAX_TEMPLATE_HITS = 20
@@ -101,88 +103,48 @@ def get_fasta_paths(fasta_dir: str):
 
 
 def main(argv):
-  # Set to database directory with Uniref90, MGnify, and BFD, Uniclust30 database.
-  # Path to the Uniref90 database for use by JackHMMER.
-  uniref90_database_path = os.path.join(
-      FLAGS.data_dir, 'uniref90', 'uniref90.fasta') \
-      if FLAGS.uniref90_database_path is None \
-      else FLAGS.uniref90_database_path
+    if len(argv) > 1:
+        raise app.UsageError('Too many command-line arguments.')
 
-  # Path to the MGnify database for use by JackHMMER.
-  mgnify_database_path = os.path.join(
-      FLAGS.data_dir, 'mgnify', 'mgy_clusters.fa') \
-      if FLAGS.mgnify_database_path is None \
-      else FLAGS.mgnify_database_path
+    # Only load the two databases we need
+    uniclust30_database_path = os.path.join(
+        FLAGS.data_dir, 'uniclust30', 'UniRef30_2020_06/UniRef30_2020_06') \
+        if FLAGS.uniclust30_database_path is None \
+        else FLAGS.uniclust30_database_path
 
-  # Path to the BFD database for use by HHblits.
-  bfd_database_path = os.path.join(
-      FLAGS.data_dir, 'bfd',
-      'bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt') \
-      if FLAGS.bfd_database_path is None \
-      else FLAGS.bfd_database_path
+    small_bfd_database_path = os.path.join(
+        FLAGS.data_dir, 'small_bfd', 'bfd-first_non_consensus_sequences.fasta') \
+        if FLAGS.small_bfd_database_path is None \
+        else FLAGS.small_bfd_database_path
 
-  # Path to the Uniclust30 database for use by HHblits.
-  uniclust30_database_path = os.path.join(
-      FLAGS.data_dir, 'uniclust30', 'UniRef30_2020_06/UniRef30_2020_06') \
-      if FLAGS.uniclust30_database_path is None \
-      else FLAGS.uniclust30_database_path
+    # get fasta paths and check for duplicated names
+    fasta_paths = get_fasta_paths(FLAGS.fasta_dir)
+    fasta_names = [pathlib.Path(p).stem for p in fasta_paths]
+    if len(fasta_names) != len(set(fasta_names)):
+        raise ValueError('All FASTA paths must have a unique basename.')
 
-  # Path to the PDB70 database for use by HHsearch.
-  pdb70_database_path = os.path.join(
-      FLAGS.data_dir, 'pdb70', 'pdb70') \
-      if FLAGS.pdb70_database_path is None \
-      else FLAGS.pdb70_database_path
+    # Set up minimal data pipeline
+    data_pipeline = pipeline.DataPipeline(
+        jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
+        hhblits_binary_path=FLAGS.hhblits_binary_path,
+        hhsearch_binary_path=FLAGS.hhsearch_binary_path,
+        uniclust30_database_path=uniclust30_database_path,
+        use_small_bfd=True,
+        small_bfd_database_path=small_bfd_database_path,
+        uniref90_database_path=None,
+        mgnify_database_path=None,
+        bfd_database_path=None,
+        pdb70_database_path=None,
+        template_featurizer=None)
 
-  # Path to a directory with template mmCIF structures, each named <pdb_id>.cif')
-  template_mmcif_dir = os.path.join(
-      FLAGS.data_dir, 'pdb_mmcif', 'mmcif_files') \
-      if FLAGS.template_mmcif_dir is None \
-      else FLAGS.template_mmcif_dir
-
-  # Path to a file mapping obsolete PDB IDs to their replacements.
-  obsolete_pdbs_path = os.path.join(
-      FLAGS.data_dir, 'pdb_mmcif', 'obsolete.dat') \
-      if FLAGS.obsolete_pdbs_path is None \
-      else FLAGS.obsolete_pdbs_path
-
-  if len(argv) > 1:
-    raise app.UsageError('Too many command-line arguments.')
-  
-  # get fasta paths and check for duplicated names
-  fasta_paths = get_fasta_paths(FLAGS.fasta_dir)
-  fasta_names = [pathlib.Path(p).stem for p in fasta_paths]
-  if len(fasta_names) != len(set(fasta_names)):
-    raise ValueError('All FASTA paths must have a unique basename.')
-
-  template_featurizer = templates.TemplateHitFeaturizer(
-      mmcif_dir=template_mmcif_dir,
-      max_template_date=FLAGS.max_template_date,
-      max_hits=MAX_TEMPLATE_HITS,
-      kalign_binary_path=FLAGS.kalign_binary_path,
-      release_dates_path=None,
-      obsolete_pdbs_path=obsolete_pdbs_path)
-
-  data_pipeline = pipeline.DataPipeline(
-      jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
-      hhblits_binary_path=FLAGS.hhblits_binary_path,
-      hhsearch_binary_path=FLAGS.hhsearch_binary_path,
-      uniref90_database_path=uniref90_database_path,
-      mgnify_database_path=mgnify_database_path,
-      bfd_database_path=bfd_database_path,
-      uniclust30_database_path=uniclust30_database_path,
-      use_small_bfd=False,
-      small_bfd_database_path="",
-      pdb70_database_path=pdb70_database_path,
-      template_featurizer=template_featurizer)
-
-  # Predict structure by pool.
-  par = partial(generate_pkl_features_from_fasta,
-                output_dir=FLAGS.output_dir,
-                data_pipeline=data_pipeline)
-  pool = Pool(FLAGS.num_workers)
-  pool.starmap(par, list(zip(fasta_paths, fasta_names)))
-  pool.close()
-  pool.join()
+    # Predict structure by pool
+    par = partial(generate_pkl_features_from_fasta,
+                 output_dir=FLAGS.output_dir,
+                 data_pipeline=data_pipeline)
+    pool = Pool(FLAGS.num_workers)
+    pool.starmap(par, list(zip(fasta_paths, fasta_names)))
+    pool.close()
+    pool.join()
 
 
 if __name__ == '__main__':
