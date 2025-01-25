@@ -395,7 +395,7 @@ van_der_waals_radius = {
     'N': 1.55,
     'O': 1.52,
     'S': 1.8,
-    'P': 1.8,  # Phosphorus has similar vdW radius to Sulfur
+    'P': 1.8, # added P
 }
 
 Bond = collections.namedtuple(
