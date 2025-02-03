@@ -505,12 +505,12 @@ class StructureModule(hk.Module):
     ret['final_atom14_positions'] = atom14_pred_positions  # (N, 14, 3)
     ret['final_atom14_mask'] = batch['atom14_atom_exists']  # (N, 14)
 
-    atom37_pred_positions = all_atom.atom14_to_atom37(atom14_pred_positions,
+    atom41_pred_positions = all_atom.atom14_to_atom41(atom14_pred_positions,
                                                       batch)
-    atom37_pred_positions *= batch['atom37_atom_exists'][:, :, None]
-    ret['final_atom_positions'] = atom37_pred_positions  # (N, 37, 3)
+    atom41_pred_positions *= batch['atom41_atom_exists'][:, :, None]
+    ret['final_atom_positions'] = atom41_pred_positions  # (N, 41, 3)
 
-    ret['final_atom_mask'] = batch['atom37_atom_exists']  # (N, 37)
+    ret['final_atom_mask'] = batch['atom41_atom_exists']  # (N, 41)
     ret['final_affines'] = ret['traj'][-1]
 
     if self.compute_loss:
@@ -680,11 +680,11 @@ def sidechain_loss(batch, value, config):
     Args:
     ret: Dictionary to write outputs into, needs to contain 'loss'.
     batch: Batch, needs to contain
-        "rigidgroups_gt_frames":np.random.rand(B,NUM_RES,8,12),             # ziyao: all_atom.atom37_to_frame
-        "rigidgroups_gt_exists":np.ones((B,NUM_RES,8)),                     # ziyao: all_atom.atom37_to_frame
-        // "rigidgroups_group_exists":np.ones((B,NUM_RES)),                    # ziyao: all_atom.atom37_to_frame
-        "rigidgroups_alt_gt_frames":np.random.rand(B,NUM_RES,8,12),         # ziyao: all_atom.atom37_to_frame
-        // "rigidgroups_group_is_ambiguous":np.zeros((B,NUM_RES)),             # ziyao: all_atom.atom37_to_frame
+        "rigidgroups_gt_frames":np.random.rand(B,NUM_RES,8,12),             # ziyao: all_atom.atom41_to_frame
+        "rigidgroups_gt_exists":np.ones((B,NUM_RES,8)),                     # ziyao: all_atom.atom41_to_frame
+        // "rigidgroups_group_exists":np.ones((B,NUM_RES)),                    # ziyao: all_atom.atom41_to_frame
+        "rigidgroups_alt_gt_frames":np.random.rand(B,NUM_RES,8,12),         # ziyao: all_atom.atom41_to_frame
+        // "rigidgroups_group_is_ambiguous":np.zeros((B,NUM_RES)),             # ziyao: all_atom.atom41_to_frame
     value: Dictionary containing structure module output, needs to contain ...
     config: Configuration of loss, should contain ...
   """
@@ -773,7 +773,7 @@ def find_structural_violations(
   ]
   atomtype_radius = jnp.asarray(atomtype_radius)
   atom14_atom_radius = batch['atom14_atom_exists'] * utils.batched_gather(
-      atomtype_radius, batch['residx_atom14_to_atom37'])
+      atomtype_radius, batch['residx_atom14_to_atom41'])
 
   # Compute the between residue clash loss.
   between_residue_clashes = all_atom.between_residue_clash_loss(

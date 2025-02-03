@@ -57,10 +57,10 @@ CONFIG_DIFFS = {
   },
   # A demo configuration for debugging:
   'demo': {
-    'data.common.max_extra_msa': 128,
+    'data.common.max_extra_msa': 1,
     'data.common.num_recycle': 1,
-    'data.eval.crop_size': 128,
-    'data.eval.max_msa_cluster': 16,
+    'data.eval.crop_size': 32,
+    'data.eval.max_msa_cluster': 1,
     'model.embeddings_and_evoformer.evoformer_num_block': 4,
     'model.embeddings_and_evoformer.extra_msa_channel': 16,
     'model.embeddings_and_evoformer.msa_channel': 128,
@@ -154,7 +154,7 @@ CONFIG = ConfigDict({
         'atom14_atom_is_ambiguous': [NUM_RES, None],
         'atom14_gt_exists': [NUM_RES, None],
         'atom14_gt_positions': [NUM_RES, None, None],
-        'atom37_atom_exists': [NUM_RES, None],
+        'atom41_atom_exists': [NUM_RES, None],
         'backbone_affine_mask': [NUM_RES],
         'backbone_affine_tensor': [NUM_RES, None],
         'bert_mask': [NUM_MSA_SEQ, NUM_RES],
@@ -173,8 +173,8 @@ CONFIG = ConfigDict({
         'pseudo_beta_mask': [NUM_RES],
         'random_crop_to_size_seed': [None],
         'residue_index': [NUM_RES],
-        'residx_atom14_to_atom37': [NUM_RES, None],
-        'residx_atom37_to_atom14': [NUM_RES, None],
+        'residx_atom14_to_atom41': [NUM_RES, None],
+        'residx_atom41_to_atom14': [NUM_RES, None],
         'resolution': [],
         'rigidgroups_alt_gt_frames': [NUM_RES, None, None],
         'rigidgroups_group_exists': [NUM_RES, None],
@@ -347,7 +347,7 @@ CONFIG = ConfigDict({
     },
     'global_config': {
       'deterministic': False,
-      'subbatch_size': 4,
+      'subbatch_size': 1,
       'use_remat': False,
       'zero_init': True
     },

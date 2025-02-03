@@ -35,7 +35,7 @@ def overwrite_b_factors(pdb_str: str, bfactors: np.ndarray) -> str:
 
   Args:
     pdb_str: An input PDB string.
-    bfactors: A numpy array with shape [1, n_residues, 37]. We assume that the
+    bfactors: A numpy array with shape [1, n_residues, 41]. We assume that the
       B-factors are per residue; i.e. that the nonzero entries are identical in
       [0, i, :].
 

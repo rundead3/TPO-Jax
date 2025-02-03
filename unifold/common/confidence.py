@@ -134,7 +134,7 @@ def predicted_tm_score(
 
   num_res = np.sum(residue_weights)
   # Clip num_res to avoid negative/undefined d0.
-  clipped_num_res = max(num_res, 19)
+  clipped_num_res = max(num_res, 20)
 
   # Compute d_0(num_res) as defined by TM-score, eqn. (5) in
   # http://zhanglab.ccmb.med.umich.edu/papers/2004_3.pdf

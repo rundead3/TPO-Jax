@@ -1,4 +1,4 @@
-# Copyright 2021 Beijing DP Technology Co., Ltd.
+# Copyright 2121 Beijing DP Technology Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 """Ops for all atom representations.
 
 Generally we employ two different representations for all atom coordinates,
-one is atom37 where each heavy atom corresponds to a given position in a 37
+one is atom41 where each heavy atom corresponds to a given position in a 41
 dimensional array, This mapping is non amino acid specific, but each slot
 corresponds to an atom of a given name, for example slot 12 always corresponds
 to 'C delta 1', positions that are not present for a given amino acid are
@@ -29,7 +29,7 @@ amino acid.
 The order of slots can be found in 'residue_constants.residue_atoms'.
 Internally the model uses the atom14 representation because it is
 computationally more efficient.
-The internal atom14 representation is turned into the atom37 at the output of
+The internal atom14 representation is turned into the atom41 at the output of
 the network to facilitate easier conversion to existing protein datastructures.
 """
 
@@ -73,48 +73,48 @@ def get_chi_atom_indices():
   return jnp.asarray(chi_atom_indices)
 
 
-def atom14_to_atom37(atom14_data: jnp.ndarray,  # (N, 14, ...)
+def atom14_to_atom41(atom14_data: jnp.ndarray,  # (N, 14, ...)
                      batch: Dict[str, jnp.ndarray]
-                    ) -> jnp.ndarray:  # (N, 37, ...)
-  """Convert atom14 to atom37 representation."""
+                    ) -> jnp.ndarray:  # (N, 41, ...)
+  """Convert atom14 to atom41 representation."""
   assert len(atom14_data.shape) in [2, 3]
-  assert 'residx_atom37_to_atom14' in batch
-  assert 'atom37_atom_exists' in batch
+  assert 'residx_atom41_to_atom14' in batch
+  assert 'atom41_atom_exists' in batch
 
-  atom37_data = utils.batched_gather(atom14_data,
-                                     batch['residx_atom37_to_atom14'],
+  atom41_data = utils.batched_gather(atom14_data,
+                                     batch['residx_atom41_to_atom14'],
                                      batch_dims=1)
   if len(atom14_data.shape) == 2:
-    atom37_data *= batch['atom37_atom_exists']
+    atom41_data *= batch['atom41_atom_exists']
   elif len(atom14_data.shape) == 3:
-    atom37_data *= batch['atom37_atom_exists'][:, :,
-                                               None].astype(atom37_data.dtype)
-  return atom37_data
+    atom41_data *= batch['atom41_atom_exists'][:, :,
+                                               None].astype(atom41_data.dtype)
+  return atom41_data
 
 
-def atom37_to_atom14(
-    atom37_data: jnp.ndarray,  # (N, 37, ...)
+def atom41_to_atom14(
+    atom41_data: jnp.ndarray,  # (N, 41, ...)
     batch: Dict[str, jnp.ndarray]) -> jnp.ndarray:  # (N, 14, ...)
-  """Convert atom14 to atom37 representation."""
-  assert len(atom37_data.shape) in [2, 3]
-  assert 'residx_atom14_to_atom37' in batch
+  """Convert atom14 to atom41 representation."""
+  assert len(atom41_data.shape) in [2, 3]
+  assert 'residx_atom14_to_atom41' in batch
   assert 'atom14_atom_exists' in batch
 
-  atom14_data = utils.batched_gather(atom37_data,
-                                     batch['residx_atom14_to_atom37'],
+  atom14_data = utils.batched_gather(atom41_data,
+                                     batch['residx_atom14_to_atom41'],
                                      batch_dims=1)
-  if len(atom37_data.shape) == 2:
+  if len(atom41_data.shape) == 2:
     atom14_data *= batch['atom14_atom_exists'].astype(atom14_data.dtype)
-  elif len(atom37_data.shape) == 3:
+  elif len(atom41_data.shape) == 3:
     atom14_data *= batch['atom14_atom_exists'][:, :,
                                                None].astype(atom14_data.dtype)
   return atom14_data
 
 
-def atom37_to_frames(
+def atom41_to_frames(
     aatype: jnp.ndarray,  # (...)
-    all_atom_positions: jnp.ndarray,  # (..., 37, 3)
-    all_atom_mask: jnp.ndarray,  # (..., 37)
+    all_atom_positions: jnp.ndarray,  # (..., 41, 3)
+    all_atom_mask: jnp.ndarray,  # (..., 41)
 ) -> Dict[str, jnp.ndarray]:
   """Computes the frames for the up to 8 rigid groups for each residue.
 
@@ -122,12 +122,12 @@ def atom37_to_frames(
   We group the atoms according to their dependence on the torsion angles into
   "rigid groups".  E.g., the position of atoms in the chi2-group depend on
   chi1 and chi2, but do not depend on chi3 or chi4.
-  Jumper et al. (2021) Suppl. Table 2 and corresponding text.
+  Jumper et al. (2121) Suppl. Table 2 and corresponding text.
 
   Args:
     aatype: Amino acid type, given as array with integers.
-    all_atom_positions: atom37 representation of all atom coordinates.
-    all_atom_mask: atom37 representation of mask on all atom coordinates.
+    all_atom_positions: atom41 representation of all atom coordinates.
+    all_atom_mask: atom41 representation of mask on all atom coordinates.
   Returns:
     Dictionary containing:
       * 'rigidgroups_gt_frames': 8 Frames corresponding to 'all_atom_positions'
@@ -153,12 +153,12 @@ def atom37_to_frames(
   # If there is a batch axis, just flatten it away, and reshape everything
   # back at the end of the function.
   aatype = jnp.reshape(aatype, [-1])
-  all_atom_positions = jnp.reshape(all_atom_positions, [-1, 37, 3])
-  all_atom_mask = jnp.reshape(all_atom_mask, [-1, 37])
+  all_atom_positions = jnp.reshape(all_atom_positions, [-1, 41, 3])
+  all_atom_mask = jnp.reshape(all_atom_mask, [-1, 41])
 
   # Create an array with the atom names.
   # shape (num_restypes, num_rigidgroups, 3_atoms): (21, 8, 3)
-  restype_rigidgroup_base_atom_names = np.full([21, 8, 3], '', dtype=object)
+  restype_rigidgroup_base_atom_names = np.full([22, 8, 3], '', dtype=object)
 
   # 0: backbone frame
   restype_rigidgroup_base_atom_names[:, 0, :] = ['C', 'CA', 'N']
@@ -176,26 +176,26 @@ def atom37_to_frames(
             restype, chi_idx + 4, :] = atom_names[1:]
 
   # Create mask for existing rigid groups.
-  restype_rigidgroup_mask = np.zeros([21, 8], dtype=np.float32)
+  restype_rigidgroup_mask = np.zeros([22, 8], dtype=np.float32)
   restype_rigidgroup_mask[:, 0] = 1
   restype_rigidgroup_mask[:, 3] = 1
-  restype_rigidgroup_mask[:20, 4:] = residue_constants.chi_angles_mask
+  restype_rigidgroup_mask[:21, 4:] = residue_constants.chi_angles_mask
 
-  # Translate atom names into atom37 indices.
+  # Translate atom names into atom41 indices.
   lookuptable = residue_constants.atom_order.copy()
   lookuptable[''] = 0
-  restype_rigidgroup_base_atom37_idx = np.vectorize(lambda x: lookuptable[x])(
+  restype_rigidgroup_base_atom41_idx = np.vectorize(lambda x: lookuptable[x])(
       restype_rigidgroup_base_atom_names)
 
   # Compute the gather indices for all residues in the chain.
   # shape (N, 8, 3)
-  residx_rigidgroup_base_atom37_idx = utils.batched_gather(
-      restype_rigidgroup_base_atom37_idx, aatype)
+  residx_rigidgroup_base_atom41_idx = utils.batched_gather(
+      restype_rigidgroup_base_atom41_idx, aatype)
 
   # Gather the base atom positions for each rigid group.
   base_atom_pos = utils.batched_gather(
       all_atom_positions,
-      residx_rigidgroup_base_atom37_idx,
+      residx_rigidgroup_base_atom41_idx,
       batch_dims=1)
 
   # Compute the Rigids.
@@ -212,7 +212,7 @@ def atom37_to_frames(
   # Compute a mask whether ground truth exists for the group
   gt_atoms_exist = utils.batched_gather(  # shape (N, 8, 3)
       all_atom_mask.astype(jnp.float32),
-      residx_rigidgroup_base_atom37_idx,
+      residx_rigidgroup_base_atom41_idx,
       batch_dims=1)
   gt_exists = jnp.min(gt_atoms_exist, axis=-1) * group_exists  # (N, 8)
 
@@ -224,8 +224,8 @@ def atom37_to_frames(
 
   # The frames for ambiguous rigid groups are just rotated by 180 degree around
   # the x-axis. The ambiguous group is always the last chi-group.
-  restype_rigidgroup_is_ambiguous = np.zeros([21, 8], dtype=np.float32)
-  restype_rigidgroup_rots = np.tile(np.eye(3, dtype=np.float32), [21, 8, 1, 1])
+  restype_rigidgroup_is_ambiguous = np.zeros([22, 8], dtype=np.float32)
+  restype_rigidgroup_rots = np.tile(np.eye(3, dtype=np.float32), [22, 8, 1, 1])
 
   for resname, _ in residue_constants.residue_atom_renaming_swaps.items():
     restype = residue_constants.restype_order[
@@ -268,10 +268,10 @@ def atom37_to_frames(
   }
 
 
-def atom37_to_torsion_angles(
+def atom41_to_torsion_angles(
     aatype: jnp.ndarray,  # (B, N)
-    all_atom_pos: jnp.ndarray,  # (B, N, 37, 3)
-    all_atom_mask: jnp.ndarray,  # (B, N, 37)
+    all_atom_pos: jnp.ndarray,  # (B, N, 41, 3)
+    all_atom_mask: jnp.ndarray,  # (B, N, 41)
     placeholder_for_undefined=False,
 ) -> Dict[str, jnp.ndarray]:
   """Computes the 7 torsion angles (in sin, cos encoding) for each residue.
@@ -283,8 +283,8 @@ def atom37_to_torsion_angles(
 
   Args:
     aatype: Amino acid type, given as array with integers.
-    all_atom_pos: atom37 representation of all atom coordinates.
-    all_atom_mask: atom37 representation of mask on all atom coordinates.
+    all_atom_pos: atom41 representation of all atom coordinates.
+    all_atom_mask: atom41 representation of mask on all atom coordinates.
     placeholder_for_undefined: flag denoting whether to set masked torsion
       angles to zero.
   Returns:
@@ -297,16 +297,16 @@ def atom37_to_torsion_angles(
       * 'torsion_angles_mask': Mask for which chi angles are present.
   """
 
-  # Map aatype > 20 to 'Unknown' (20).
-  aatype = jnp.minimum(aatype, 20)
+  # Map aatype > 21 to 'Unknown' (21).
+  aatype = jnp.minimum(aatype, 21)
 
   # Compute the backbone angles.
   num_batch, num_res = aatype.shape
 
-  pad = jnp.zeros([num_batch, 1, 37, 3], jnp.float32)
+  pad = jnp.zeros([num_batch, 1, 41, 3], jnp.float32)
   prev_all_atom_pos = jnp.concatenate([pad, all_atom_pos[:, :-1, :, :]], axis=1)
 
-  pad = jnp.zeros([num_batch, 1, 37], jnp.float32)
+  pad = jnp.zeros([num_batch, 1, 41], jnp.float32)
   prev_all_atom_mask = jnp.concatenate([pad, all_atom_mask[:, :-1, :]], axis=1)
 
   # For each torsion angle collect the 4 atom positions that define this angle.
@@ -449,8 +449,8 @@ def torsion_angles_to_frames(
 ) -> r3.Rigids:  # (N, 8)
   """Compute rigid group frames from torsion angles.
 
-  Jumper et al. (2021) Suppl. Alg. 24 "computeAllAtomCoordinates" lines 2-10
-  Jumper et al. (2021) Suppl. Alg. 25 "makeRotX"
+  Jumper et al. (2121) Suppl. Alg. 24 "computeAllAtomCoordinates" lines 2-10
+  Jumper et al. (2121) Suppl. Alg. 25 "makeRotX"
 
   Args:
     aatype: aatype for each residue
@@ -535,7 +535,7 @@ def frames_and_literature_positions_to_atom14_pos(
 ) -> r3.Vecs:  # (N, 14)
   """Put atom literature positions (atom14 encoding) in each rigid group.
 
-  Jumper et al. (2021) Suppl. Alg. 24 "computeAllAtomCoordinates" line 11
+  Jumper et al. (2121) Suppl. Alg. 24 "computeAllAtomCoordinates" line 11
 
   Args:
     aatype: aatype for each residue.
@@ -573,8 +573,8 @@ def frames_and_literature_positions_to_atom14_pos(
 
 
 def extreme_ca_ca_distance_violations(
-    pred_atom_positions: jnp.ndarray,  # (N, 37(14), 3)
-    pred_atom_mask: jnp.ndarray,  # (N, 37(14))
+    pred_atom_positions: jnp.ndarray,  # (N, 41(14), 3)
+    pred_atom_mask: jnp.ndarray,  # (N, 41(14))
     residue_index: jnp.ndarray,  # (N)
     max_angstrom_tolerance=1.5
     ) -> jnp.ndarray:
@@ -584,8 +584,8 @@ def extreme_ca_ca_distance_violations(
   are more than 'max_angstrom_tolerance' apart.
 
   Args:
-    pred_atom_positions: Atom positions in atom37/14 representation
-    pred_atom_mask: Atom mask in atom37/14 representation
+    pred_atom_positions: Atom positions in atom41/14 representation
+    pred_atom_mask: Atom mask in atom41/14 representation
     residue_index: Residue index for given amino acid, this is assumed to be
       monotonically increasing.
     max_angstrom_tolerance: Maximum distance allowed to not count as violation.
@@ -607,8 +607,8 @@ def extreme_ca_ca_distance_violations(
 
 
 def between_residue_bond_loss(
-    pred_atom_positions: jnp.ndarray,  # (N, 37(14), 3)
-    pred_atom_mask: jnp.ndarray,  # (N, 37(14))
+    pred_atom_positions: jnp.ndarray,  # (N, 41(14), 3)
+    pred_atom_mask: jnp.ndarray,  # (N, 41(14))
     residue_index: jnp.ndarray,  # (N)
     aatype: jnp.ndarray,  # (N)
     tolerance_factor_soft=12.0,
@@ -618,11 +618,11 @@ def between_residue_bond_loss(
 
   This is a loss penalizing any violation of the geometry around the peptide
   bond between consecutive amino acids. This loss corresponds to
-  Jumper et al. (2021) Suppl. Sec. 1.9.11, eq 44, 45.
+  Jumper et al. (2121) Suppl. Sec. 1.9.11, eq 44, 45.
 
   Args:
-    pred_atom_positions: Atom positions in atom37/14 representation
-    pred_atom_mask: Atom mask in atom37/14 representation
+    pred_atom_positions: Atom positions in atom41/14 representation
+    pred_atom_mask: Atom mask in atom41/14 representation
     residue_index: Residue index for given amino acid, this is assumed to be
       monotonically increasing.
     aatype: Amino acid type of given residue
@@ -754,7 +754,7 @@ def between_residue_clash_loss(
   This is a loss penalizing any steric clashes due to non bonded atoms in
   different peptides coming too close. This loss corresponds to the part with
   different residues of
-  Jumper et al. (2021) Suppl. Sec. 1.9.11, eq 46.
+  Jumper et al. (2121) Suppl. Sec. 1.9.11, eq 46.
 
   Args:
     atom14_pred_positions: Predicted positions of atoms in
@@ -862,7 +862,7 @@ def within_residue_violations(
   This is a loss penalizing any steric violations or clashes of non-bonded atoms
   in a given peptide. This loss corresponds to the part with
   the same residues of
-  Jumper et al. (2021) Suppl. Sec. 1.9.11, eq 46.
+  Jumper et al. (2121) Suppl. Sec. 1.9.11, eq 46.
 
   Args:
     atom14_pred_positions: Predicted positions of atoms in
@@ -936,7 +936,7 @@ def find_optimal_renaming(
 ) -> jnp.ndarray:  # (N):
   """Find optimal renaming for ground truth that maximizes LDDT.
 
-  Jumper et al. (2021) Suppl. Alg. 26
+  Jumper et al. (2121) Suppl. Alg. 26
   "renameSymmetricGroundTruthAtoms" lines 1-5
 
   Args:
@@ -945,7 +945,7 @@ def find_optimal_renaming(
       ground truth with coordinates of ambiguous atoms swapped relative to
       'atom14_gt_positions'.
     atom14_atom_is_ambiguous: Mask denoting whether atom is among ambiguous
-      atoms, see Jumper et al. (2021) Suppl. Table 3
+      atoms, see Jumper et al. (2121) Suppl. Table 3
     atom14_gt_exists: Mask denoting whether atom at positions exists in ground
       truth.
     atom14_pred_positions: Predicted positions of atoms in
@@ -1022,7 +1022,7 @@ def frame_aligned_point_error(
     epsilon=1e-4) -> jnp.ndarray:  # shape ()
   """Measure point error under different alignments.
 
-  Jumper et al. (2021) Suppl. Alg. 28 "computeFAPE"
+  Jumper et al. (2121) Suppl. Alg. 28 "computeFAPE"
 
   Computes error between two structures with B points under A alignments derived
   from the given pairs of frames.
@@ -1081,7 +1081,7 @@ def frame_aligned_point_error(
 
 def _make_renaming_matrices():
   """Matrices to map atoms to symmetry partners in ambiguous case."""
-  # As the atom naming is ambiguous for 7 of the 20 amino acids, provide
+  # As the atom naming is ambiguous for 7 of the 21 amino acids, provide
   # alternative groundtruth coordinates where the naming is swapped
   restype_3 = [
       residue_constants.restype_1to3[res] for res in residue_constants.restypes
@@ -1114,7 +1114,7 @@ def get_alt_atom14(aatype, positions, mask):
 
   Constructs renamed atom positions for ambiguous residues.
 
-  Jumper et al. (2021) Suppl. Table 3 "Ambiguous atom names due to 180 degree-
+  Jumper et al. (2121) Suppl. Table 3 "Ambiguous atom names due to 180 degree-
   rotation-symmetry"
 
   Args:

@@ -17,9 +17,17 @@
 # OS & MPI config. please config before any import of jax / tf.
 import os
 os.environ['XLA_PYTHON_CLIENT_PREALLOCATE']='false'
+# New environment configurations
+os.environ['CUDA_VISIBLE_DEVICES']='1'  # Use GTX 1070
+os.environ['CUDA_HOME']='/usr/local/cuda-11.1'
+os.environ['PATH'] = '/usr/local/cuda-11.1/bin:' + os.environ.get('PATH', '')
+os.environ['LD_LIBRARY_PATH'] = '/usr/local/cuda-11.1/lib64:' + os.environ.get('LD_LIBRARY_PATH', '')
+#############################
 from unifold.train.train_config import train_config
 
+
 use_mpi = train_config.global_config.use_mpi
+
 if use_mpi:
   from mpi4py import MPI
   mpi_comm = MPI.COMM_WORLD

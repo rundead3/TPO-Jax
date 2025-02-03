@@ -1,19 +1,6 @@
-# Copyright 2021 Beijing DP Technology Co., Ltd.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+
 
 """Constants used in Uni-Fold."""
-
 import collections
 import functools
 from typing import List, Mapping, Tuple
@@ -54,10 +41,10 @@ chi_angles_atoms = {
     'PRO': [['N', 'CA', 'CB', 'CG'], ['CA', 'CB', 'CG', 'CD']],
     'SER': [['N', 'CA', 'CB', 'OG']],
     'THR': [['N', 'CA', 'CB', 'OG1']],
-    'TPO': [['N', 'CA', 'CB', 'OG1'], ['CA', 'CB', 'OG1', 'P']],
     'TRP': [['N', 'CA', 'CB', 'CG'], ['CA', 'CB', 'CG', 'CD1']],
     'TYR': [['N', 'CA', 'CB', 'CG'], ['CA', 'CB', 'CG', 'CD1']],
     'VAL': [['N', 'CA', 'CB', 'CG1']],
+    'TPO': [['N', 'CA', 'CB', 'OG1'], ['CA', 'CB', 'OG1', 'P']],
 }
 
 # If chi angles given in fixed-length array, this matrix determines how to mask
@@ -80,10 +67,10 @@ chi_angles_mask = [
     [1.0, 1.0, 0.0, 0.0],  # PRO
     [1.0, 0.0, 0.0, 0.0],  # SER
     [1.0, 0.0, 0.0, 0.0],  # THR
-    [1.0, 1.0, 0.0, 0.0],  # TPO
     [1.0, 1.0, 0.0, 0.0],  # TRP
     [1.0, 1.0, 0.0, 0.0],  # TYR
     [1.0, 0.0, 0.0, 0.0],  # VAL
+    [1.0, 1.0, 0.0, 0.0],  # TPO
 ]
 
 # The following chi angles are pi periodic: they can be rotated by a multiple
@@ -295,19 +282,6 @@ rigid_group_atom_positions = {
         ['CG2', 4, (0.550, -0.718, -1.228)],
         ['OG1', 4, (0.472, 1.353, 0.000)],
     ],
-    'TPO': [
-        ['N', 0, (-0.517, 1.364, 0.000)],
-        ['CA', 0, (0.000, 0.000, 0.000)],
-        ['C', 0, (1.526, 0.000, -0.000)],
-        ['CB', 0, (-0.516, -0.793, -1.215)],
-        ['O', 3, (0.626, 1.062, 0.000)],
-        ['CG2', 4, (0.550, -0.718, -1.228)],
-        ['OG1', 4, (0.472, 1.353, 0.000)],
-        ['P', 5, (0.755, 1.093, 0.000)],
-        ['O1P', 5, (0.607, 1.095, -0.000)],
-        ['O2P', 5, (0.589, -1.104, -0.001)],
-        ['O3P', 5, (0.634, 1.060, 0.000)],
-    ],
     'TRP': [
         ['N', 0, (-0.521, 1.363, 0.000)],
         ['CA', 0, (0.000, 0.000, 0.000)],
@@ -347,6 +321,22 @@ rigid_group_atom_positions = {
         ['CG1', 4, (0.540, 1.429, -0.000)],
         ['CG2', 4, (0.533, -0.776, 1.203)],
     ],
+    'TPO': [
+            # Groups 0-3 are backbone
+        ['N', 0, (-0.517, 1.364, 0.000)],
+        ['CA', 0, (0.000, 0.000, 0.000)],
+        ['C', 0, (1.526, 0.000, -0.000)],
+        ['CB', 0, (-0.516, -0.793, -1.215)],
+        ['O', 3, (0.626, 1.062, 0.000)],
+            # Group 4 - chi1 group
+        ['CG2', 4, (0.550, -0.718, -1.228)],
+        ['OG1', 4, (0.472, 1.353, 0.000)],
+            # Group 5 - chi2 group 
+        ['P', 5, (0.755, 1.093, 0.000)],
+        ['O1P', 5, (0.607, 1.095, -0.000)],
+        ['O2P', 5, (0.589, -1.104, -0.001)],
+        ['O3P', 5, (0.634, 1.060, 0.000)],
+    ],
 }
 
 # A list of atoms (excluding hydrogen) for each AA type. PDB naming convention.
@@ -368,12 +358,12 @@ residue_atoms = {
     'PRO': ['C', 'CA', 'CB', 'CG', 'CD', 'N', 'O'],
     'SER': ['C', 'CA', 'CB', 'N', 'O', 'OG'],
     'THR': ['C', 'CA', 'CB', 'CG2', 'N', 'O', 'OG1'],
-    'TPO': ['C', 'CA', 'CB', 'CG2', 'N', 'O', 'OG1', 'P', 'O1P', 'O2P', 'O3P'],
     'TRP': ['C', 'CA', 'CB', 'CG', 'CD1', 'CD2', 'CE2', 'CE3', 'CZ2', 'CZ3',
             'CH2', 'N', 'NE1', 'O'],
     'TYR': ['C', 'CA', 'CB', 'CG', 'CD1', 'CD2', 'CE1', 'CE2', 'CZ', 'N', 'O',
             'OH'],
-    'VAL': ['C', 'CA', 'CB', 'CG1', 'CG2', 'N', 'O']
+    'VAL': ['C', 'CA', 'CB', 'CG1', 'CG2', 'N', 'O'],
+    'TPO': ['C', 'CA', 'CB', 'CG2', 'N', 'O', 'OG1', 'P', 'O1P', 'O2P', 'O3P'],
 }
 
 # Naming swaps for ambiguous atom names.
@@ -536,9 +526,9 @@ restype_name_to_atom14_names = {
     'SER': ['N', 'CA', 'C', 'O', 'CB', 'OG',  '',    '',    '',    '',    '',    '',    '',    ''],
     'THR': ['N', 'CA', 'C', 'O', 'CB', 'OG1', 'CG2', '',    '',    '',    '',    '',    '',    ''],
     'TRP': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD1', 'CD2', 'NE1', 'CE2', 'CE3', 'CZ2', 'CZ3', 'CH2'],
-    'TPO': ['N', 'CA', 'C', 'O', 'CB', 'OG1', 'CG2', 'P', 'O1P', 'O2P', 'O3P', '', '', ''],
     'TYR': ['N', 'CA', 'C', 'O', 'CB', 'CG',  'CD1', 'CD2', 'CE1', 'CE2', 'CZ',  'OH',  '',    ''],
     'VAL': ['N', 'CA', 'C', 'O', 'CB', 'CG1', 'CG2', '',    '',    '',    '',    '',    '',    ''],
+    'TPO': ['N', 'CA', 'C', 'O', 'CB', 'OG1', 'CG2', 'P', 'O1P', 'O2P', 'O3P', '', '', ''],
     'UNK': ['',  '',   '',  '',  '',   '',    '',    '',    '',    '',    '',    '',    '',    ''],
 
 }
@@ -550,15 +540,16 @@ restype_name_to_atom14_names = {
 # Reproduce it by taking 3-letter AA codes and sorting them alphabetically.
 restypes = [
     'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P',
-    'S', 'T', 'W', 'Y', 'V', 'Z'  # Z for TPO
+    'S', 'T', 'W', 'Y', 'V', 'J'  # J for TPO
 ]
 restype_order = {restype: i for i, restype in enumerate(restypes)}
 restype_num = len(restypes)  # := 21.
 unk_restype_index = restype_num  # Catch-all index for unknown restypes.
 
-# Add gap character for sequence alignments
-restypes_with_gap = restypes + ['-']
-restype_order_with_gap = {restype: i for i, restype in enumerate(restypes_with_gap)}
+
+restypes_with_x = restypes + ['X']
+restype_order_with_x = {restype: i for i, restype in enumerate(restypes_with_x)}
+
 
 def sequence_to_onehot(
     sequence: str,
@@ -624,7 +615,7 @@ restype_1to3 = {
     'W': 'TRP',
     'Y': 'TYR',
     'V': 'VAL',
-    'Z': 'TPO',  # Map Z to TPO
+    'J': 'TPO',  # Map J to TPO
 }
 
 
@@ -639,6 +630,7 @@ unk_restype = 'UNK'
 
 resnames = [restype_1to3[r] for r in restypes] + [unk_restype]
 resname_to_idx = {resname: i for i, resname in enumerate(resnames)}
+
 
 
 # The mapping here uses hhblits convention, so that B is mapped to D, J and O
@@ -663,7 +655,7 @@ HHBLITS_AA_TO_ID = {
     'L': 9,
     'M': 10,
     'N': 11,
-    'O': 20,
+    'O': 21,
     'P': 12,
     'Q': 13,
     'R': 14,
@@ -672,10 +664,10 @@ HHBLITS_AA_TO_ID = {
     'U': 1,
     'V': 17,
     'W': 18,
-    'X': 20,
+    'X': 21,
     'Y': 19,
     'Z': 3,
-    '-': 21,
+    '-': 22,
 }
 
 # Partial inversion of HHBLITS_AA_TO_ID.
@@ -700,9 +692,11 @@ ID_TO_HHBLITS_AA = {
     17: 'V',
     18: 'W',
     19: 'Y',
-    20: 'X',  # Includes J and O.
-    21: '-',
+    20: 'J',  # Includes J and O.
+    21: 'X',
+    22: '-',
 }
+
 
 restypes_with_x_and_gap = restypes + ['X', '-']
 MAP_HHBLITS_AATYPE_TO_OUR_AATYPE = tuple(
@@ -790,13 +784,13 @@ def _make_rigid_transformation_4x4(ex, ey, translation):
 # and an array with (restype, atomtype, coord) for the atom positions
 # and compute affine transformation matrices (4,4) from one rigid group to the
 # previous group
-restype_atom37_to_rigid_group = np.zeros([21, 37], dtype=np.int)
-restype_atom37_mask = np.zeros([21, 37], dtype=np.float32)
-restype_atom37_rigid_group_positions = np.zeros([21, 37, 3], dtype=np.float32)
-restype_atom14_to_rigid_group = np.zeros([21, 14], dtype=np.int)
-restype_atom14_mask = np.zeros([21, 14], dtype=np.float32)
-restype_atom14_rigid_group_positions = np.zeros([21, 14, 3], dtype=np.float32)
-restype_rigid_group_default_frame = np.zeros([21, 8, 4, 4], dtype=np.float32)
+restype_atom41_to_rigid_group = np.zeros([22, 41], dtype=np.int)
+restype_atom41_mask = np.zeros([22, 41], dtype=np.float32)
+restype_atom41_rigid_group_positions = np.zeros([22, 41, 3], dtype=np.float32)
+restype_atom14_to_rigid_group = np.zeros([22, 14], dtype=np.int)
+restype_atom14_mask = np.zeros([22, 14], dtype=np.float32)
+restype_atom14_rigid_group_positions = np.zeros([22, 14, 3], dtype=np.float32)
+restype_rigid_group_default_frame = np.zeros([22, 8, 4, 4], dtype=np.float32)
 
 
 def _make_rigid_group_constants():
@@ -806,9 +800,9 @@ def _make_rigid_group_constants():
     for atomname, group_idx, atom_position in rigid_group_atom_positions[
         resname]:
       atomtype = atom_order[atomname]
-      restype_atom37_to_rigid_group[restype, atomtype] = group_idx
-      restype_atom37_mask[restype, atomtype] = 1
-      restype_atom37_rigid_group_positions[restype, atomtype, :] = atom_position
+      restype_atom41_to_rigid_group[restype, atomtype] = group_idx
+      restype_atom41_mask[restype, atomtype] = 1
+      restype_atom41_rigid_group_positions[restype, atomtype, :] = atom_position
 
       atom14idx = restype_name_to_atom14_names[resname].index(atomname)
       restype_atom14_to_rigid_group[restype, atom14idx] = group_idx
@@ -850,6 +844,7 @@ def _make_rigid_group_constants():
           ey=base_atom_positions[0] - base_atom_positions[1],
           translation=base_atom_positions[2])
       restype_rigid_group_default_frame[restype, 4, :, :] = mat
+	
 
     # chi2-frame to chi1-frame
     # chi3-frame to chi2-frame
@@ -870,12 +865,13 @@ def _make_rigid_group_constants():
 _make_rigid_group_constants()
 
 
+
 def make_atom14_dists_bounds(overlap_tolerance=1.5,
                              bond_length_tolerance_factor=15):
   """compute upper and lower bounds for bonds to assess violations."""
-  restype_atom14_bond_lower_bound = np.zeros([21, 14, 14], np.float32)
-  restype_atom14_bond_upper_bound = np.zeros([21, 14, 14], np.float32)
-  restype_atom14_bond_stddev = np.zeros([21, 14, 14], np.float32)
+  restype_atom14_bond_lower_bound = np.zeros([22, 14, 14], np.float32)
+  restype_atom14_bond_upper_bound = np.zeros([22, 14, 14], np.float32)
+  restype_atom14_bond_stddev = np.zeros([22, 14, 14], np.float32)
   residue_bonds, residue_virtual_bonds, _ = load_stereo_chemical_props()
   for restype, restype_letter in enumerate(restypes):
     resname = restype_1to3[restype_letter]
@@ -909,7 +905,7 @@ def make_atom14_dists_bounds(overlap_tolerance=1.5,
       restype_atom14_bond_upper_bound[restype, atom2_idx, atom1_idx] = upper
       restype_atom14_bond_stddev[restype, atom1_idx, atom2_idx] = b.stddev
       restype_atom14_bond_stddev[restype, atom2_idx, atom1_idx] = b.stddev
-  return {'lower_bound': restype_atom14_bond_lower_bound,  # shape (21,14,14)
-          'upper_bound': restype_atom14_bond_upper_bound,  # shape (21,14,14)
-          'stddev': restype_atom14_bond_stddev,  # shape (21,14,14)
+  return {'lower_bound': restype_atom14_bond_lower_bound,  # shape (22,14,14)
+          'upper_bound': restype_atom14_bond_upper_bound,  # shape (22,14,14)
+          'stddev': restype_atom14_bond_stddev,  # shape (22,14,14)
          }

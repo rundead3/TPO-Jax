@@ -102,13 +102,13 @@ def correct_msa_restypes(protein):
   # ziyao: tf.gather [*, n, *] -> [*, m, *] is similar to embedding lookup, which gets corresponding indices from the given axis.
   protein['msa'] = tf.gather(new_order, protein['msa'], axis=0)
 
-  perm_matrix = np.zeros((22, 22), dtype=np.float32)
+  perm_matrix = np.zeros((23, 23), dtype=np.float32)
   perm_matrix[range(len(new_order_list)), new_order_list] = 1.
 
   for k in protein:
     if 'profile' in k:  # Include both hhblits and psiblast profiles
       num_dim = protein[k].shape.as_list()[-1]
-      assert num_dim in [20, 21, 22], (
+      assert num_dim in [21, 22, 23], (
           'num_dim for %s out of expected range: %s' % (k, num_dim))
       protein[k] = tf.tensordot(protein[k], perm_matrix[:num_dim, :num_dim], 1)
   return protein
@@ -144,8 +144,8 @@ def randomly_replace_msa_with_unknown(protein, replace_proportion):
   """Replace a proportion of the MSA with 'X'."""
   msa_mask = (tf.random.uniform(shape_helpers.shape_list(protein['msa'])) <
               replace_proportion)
-  x_idx = 20
-  gap_idx = 21
+  x_idx = 21
+  gap_idx = 22
   msa_mask = tf.logical_and(msa_mask, protein['msa'] != gap_idx)
   protein['msa'] = tf.where(msa_mask,
                             tf.ones_like(protein['msa']) * x_idx,
@@ -259,15 +259,15 @@ def nearest_neighbor_clusters(protein, gap_agreement_weight=0.):
   # agreement because it could be spurious.
   # Never put weight on agreeing on BERT mask
   weights = tf.concat([
-      tf.ones(21),
+      tf.ones(22),
       gap_agreement_weight * tf.ones(1),
       np.zeros(1)], 0)
 
   # Make agreement score as weighted Hamming distance
   sample_one_hot = (protein['msa_mask'][:, :, None] *
-                    tf.one_hot(protein['msa'], 23))
+                    tf.one_hot(protein['msa'], 24))
   extra_one_hot = (protein['extra_msa_mask'][:, :, None] *
-                   tf.one_hot(protein['extra_msa'], 23))
+                   tf.one_hot(protein['extra_msa'], 24))
 
   num_seq, num_res, _ = shape_helpers.shape_list(sample_one_hot)
   extra_num_seq, _, _ = shape_helpers.shape_list(extra_one_hot)
@@ -275,8 +275,8 @@ def nearest_neighbor_clusters(protein, gap_agreement_weight=0.):
   # Compute tf.einsum('mrc,nrc,c->mn', sample_one_hot, extra_one_hot, weights)
   # in an optimized fashion to avoid possible memory or computation blowup.
   agreement = tf.matmul(
-      tf.reshape(extra_one_hot, [extra_num_seq, num_res * 23]),
-      tf.reshape(sample_one_hot * weights, [num_seq, num_res * 23]),
+      tf.reshape(extra_one_hot, [extra_num_seq, num_res * 24]),
+      tf.reshape(sample_one_hot * weights, [num_seq, num_res * 24]),
       transpose_b=True)
 
   # Assign each sequence in the extra sequences to the closest MSA sample
@@ -297,8 +297,8 @@ def summarize_clusters(protein):
   mask = protein['extra_msa_mask']
   mask_counts = 1e-6 + protein['msa_mask'] + csum(mask)  # Include center
 
-  msa_sum = csum(mask[:, :, None] * tf.one_hot(protein['extra_msa'], 23))
-  msa_sum += tf.one_hot(protein['msa'], 23)  # Original sequence
+  msa_sum = csum(mask[:, :, None] * tf.one_hot(protein['extra_msa'], 24))
+  msa_sum += tf.one_hot(protein['msa'], 24)  # Original sequence
   protein['cluster_profile'] = msa_sum / mask_counts[:, :, None]
 
   del msa_sum
@@ -374,7 +374,7 @@ def make_hhblits_profile(protein):
 
   # Compute the profile for every residue (over all MSA sequences).
   protein['hhblits_profile'] = tf.reduce_mean(
-      tf.one_hot(protein['msa'], 22), axis=0)
+      tf.one_hot(protein['msa'], 23), axis=0)
   return protein
 
 
@@ -382,12 +382,12 @@ def make_hhblits_profile(protein):
 def make_masked_msa(protein, config, replace_fraction):
   """Create data for BERT on raw MSA."""
   # Add a random amino acid uniformly
-  random_aa = tf.constant([0.05] * 20 + [0., 0.], dtype=tf.float32)
+  random_aa = tf.constant([0.05] * 21 + [0., 0.], dtype=tf.float32)
 
   categorical_probs = (
       config.uniform_prob * random_aa +
       config.profile_prob * protein['hhblits_profile'] +
-      config.same_prob * tf.one_hot(protein['msa'], 22))
+      config.same_prob * tf.one_hot(protein['msa'], 23))
 
   # Put all remaining probability on [MASK] which is a new column
   pad_shapes = [[0, 0] for _ in range(len(categorical_probs.shape))]
@@ -452,14 +452,14 @@ def make_msa_feat(protein):
   has_break = tf.clip_by_value(
       tf.cast(protein['between_segment_residues'], tf.float32),
       0, 1)
-  aatype_1hot = tf.one_hot(protein['aatype'], 21, axis=-1)
+  aatype_1hot = tf.one_hot(protein['aatype'], 22, axis=-1)
 
   target_feat = [
       tf.expand_dims(has_break, axis=-1),
       aatype_1hot,  # Everyone gets the original sequence.
   ]
 
-  msa_1hot = tf.one_hot(protein['msa'], 23, axis=-1)
+  msa_1hot = tf.one_hot(protein['msa'], 24, axis=-1)
   has_deletion = tf.clip_by_value(protein['deletion_matrix'], 0., 1.)
   deletion_value = tf.atan(protein['deletion_matrix'] / 3.) * (2. / np.pi)
 
@@ -565,22 +565,22 @@ def random_crop_to_size(protein, crop_size, max_templates, shape_schema,
 
 
 def make_atom14_masks(protein):
-  """Construct denser atom positions (14 dimensions instead of 37)."""
-  restype_atom14_to_atom37 = []  # mapping (restype, atom14) --> atom37
-  restype_atom37_to_atom14 = []  # mapping (restype, atom37) --> atom14
+  """Construct denser atom positions (14 dimensions instead of 41)."""
+  restype_atom14_to_atom41 = []  # mapping (restype, atom14) --> atom37
+  restype_atom41_to_atom14 = []  # mapping (restype, atom41) --> atom14
   restype_atom14_mask = []
 
   for rt in residue_constants.restypes:
     atom_names = residue_constants.restype_name_to_atom14_names[
         residue_constants.restype_1to3[rt]]
 
-    restype_atom14_to_atom37.append([
+    restype_atom14_to_atom41.append([
         (residue_constants.atom_order[name] if name else 0)
         for name in atom_names
     ])
 
     atom_name_to_idx14 = {name: i for i, name in enumerate(atom_names)}
-    restype_atom37_to_atom14.append([
+    restype_atom41_to_atom14.append([
         (atom_name_to_idx14[name] if name in atom_name_to_idx14 else 0)
         for name in residue_constants.atom_types
     ])
@@ -588,40 +588,40 @@ def make_atom14_masks(protein):
     restype_atom14_mask.append([(1. if name else 0.) for name in atom_names])
 
   # Add dummy mapping for restype 'UNK'
-  restype_atom14_to_atom37.append([0] * 14)
-  restype_atom37_to_atom14.append([0] * 37)
+  restype_atom14_to_atom41.append([0] * 14)
+  restype_atom41_to_atom14.append([0] * 41)
   restype_atom14_mask.append([0.] * 14)
 
-  restype_atom14_to_atom37 = np.array(restype_atom14_to_atom37, dtype=np.int32)
-  restype_atom37_to_atom14 = np.array(restype_atom37_to_atom14, dtype=np.int32)
+  restype_atom14_to_atom41 = np.array(restype_atom14_to_atom41, dtype=np.int32)
+  restype_atom41_to_atom14 = np.array(restype_atom41_to_atom14, dtype=np.int32)
   restype_atom14_mask = np.array(restype_atom14_mask, dtype=np.float32)
 
-  # create the mapping for (residx, atom14) --> atom37, i.e. an array
-  # with shape (num_res, 14) containing the atom37 indices for this protein
-  residx_atom14_to_atom37 = tf.gather(restype_atom14_to_atom37,
+  # create the mapping for (residx, atom14) --> atom41, i.e. an array
+  # with shape (num_res, 14) containing the atom41 indices for this protein
+  residx_atom14_to_atom41 = tf.gather(restype_atom14_to_atom41,
                                       protein['aatype'])
   residx_atom14_mask = tf.gather(restype_atom14_mask,
                                  protein['aatype'])
 
   protein['atom14_atom_exists'] = residx_atom14_mask
-  protein['residx_atom14_to_atom37'] = residx_atom14_to_atom37
+  protein['residx_atom14_to_atom41'] = residx_atom14_to_atom41
 
   # create the gather indices for mapping back
-  residx_atom37_to_atom14 = tf.gather(restype_atom37_to_atom14,
+  residx_atom41_to_atom14 = tf.gather(restype_atom41_to_atom14,
                                       protein['aatype'])
-  protein['residx_atom37_to_atom14'] = residx_atom37_to_atom14
+  protein['residx_atom41_to_atom14'] = residx_atom41_to_atom14
 
   # create the corresponding mask
-  restype_atom37_mask = np.zeros([21, 37], dtype=np.float32)
+  restype_atom41_mask = np.zeros([21, 41], dtype=np.float32)
   for restype, restype_letter in enumerate(residue_constants.restypes):
     restype_name = residue_constants.restype_1to3[restype_letter]
     atom_names = residue_constants.residue_atoms[restype_name]
     for atom_name in atom_names:
       atom_type = residue_constants.atom_order[atom_name]
-      restype_atom37_mask[restype, atom_type] = 1
+      restype_atom41_mask[restype, atom_type] = 1
 
-  residx_atom37_mask = tf.gather(restype_atom37_mask,
+  residx_atom41_mask = tf.gather(restype_atom41_mask,
                                  protein['aatype'])
-  protein['atom37_atom_exists'] = residx_atom37_mask
+  protein['atom41_atom_exists'] = residx_atom41_mask
 
   return protein

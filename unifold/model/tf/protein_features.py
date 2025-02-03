@@ -40,7 +40,7 @@ NUM_TEMPLATES = "num templates placeholder"
 
 FEATURES = {
     #### Static features of a protein sequence ####
-    "aatype": (tf.float32, [NUM_RES, 21]),
+    "aatype": (tf.float32, [NUM_RES, 22]),
     "between_segment_residues": (tf.int64, [NUM_RES, 1]),
     "deletion_matrix": (tf.float32, [NUM_SEQ, NUM_RES, 1]),
     "domain_name": (tf.string, [1]),
@@ -55,7 +55,7 @@ FEATURES = {
     "resolution": (tf.float32, [1]),
     "template_domain_names": (tf.string, [NUM_TEMPLATES]),
     "template_sum_probs": (tf.float32, [NUM_TEMPLATES, 1]),
-    "template_aatype": (tf.float32, [NUM_TEMPLATES, NUM_RES, 22]),
+    "template_aatype": (tf.float32, [NUM_TEMPLATES, NUM_RES, 23]),
     "template_all_atom_positions": (tf.float32, [
         NUM_TEMPLATES, NUM_RES, residue_constants.atom_type_num, 3
     ]),

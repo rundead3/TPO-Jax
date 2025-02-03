@@ -72,7 +72,7 @@ Update restype mappings (✓ already done)
 ```
 restypes = [
     'A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P',
-    'S', 'T', 'W', 'Y', 'V', 'X'  # X for TPO
+    'S', 'T', 'W', 'Y', 'V', 'J'  # J for TPO
 ]
 restype_order = {restype: i for i, restype in enumerate(restypes)}
 restype_num = len(restypes)  # := 21

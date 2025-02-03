@@ -44,6 +44,7 @@ def parse_tfexample(
       for k, v in features.items()
   }
   parsed_features = tf.io.parse_single_example(raw_data, feature_map)
+
   reshaped_features = parse_reshape_logic(parsed_features, features, key=key)
 
   return reshaped_features
@@ -59,6 +60,7 @@ def parse_reshape_logic(
     features: protein_features.FeaturesMetadata,
     key: Optional[str] = None) -> TensorDict:
   """Transforms parsed serial features to the correct shape."""
+
   # Find out what is the number of sequences and the number of alignments.
   num_residues = tf.cast(_first(parsed_features["seq_length"]), dtype=tf.int32)
 

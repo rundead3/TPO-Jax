@@ -122,7 +122,7 @@ def create_extra_msa_feature(batch):
     Concatenated tensor of extra MSA features.
   """
   # 23 = 20 amino acids + 'X' for unknown + gap + bert mask
-  msa_1hot = jax.nn.one_hot(batch['extra_msa'], 23)
+  msa_1hot = jax.nn.one_hot(batch['extra_msa'], 24)
   msa_feat = [msa_1hot,
               jnp.expand_dims(batch['extra_has_deletion'], axis=-1),
               jnp.expand_dims(batch['extra_deletion_value'], axis=-1)]
@@ -1234,12 +1234,12 @@ class ExperimentallyResolvedHead(hk.Module):
 
     Returns:
       Dictionary containing:
-        * 'logits': logits of shape [N_res, 37],
-            log probability that an atom is resolved in atom37 representation,
+        * 'logits': logits of shape [N_res, 41],
+            log probability that an atom is resolved in atom41 representation,
             can be converted to probability by applying sigmoid.
     """
     logits = common_modules.Linear(
-        37,  # atom_exists.shape[-1]
+        41,  # atom_exists.shape[-1]
         initializer=utils.final_init(self.global_config),
         name='logits')(representations['single'])
     return dict(logits=logits)
@@ -1249,7 +1249,7 @@ class ExperimentallyResolvedHead(hk.Module):
     assert len(logits.shape) == 2
 
     # Does the atom appear in the amino acid?
-    atom_exists = batch['atom37_atom_exists']
+    atom_exists = batch['atom41_atom_exists']
     # Is the atom resolved in the experiment? Subset of atom_exists,
     # *except for OXT*
     all_atom_mask = batch['all_atom_mask'].astype(jnp.float32)
@@ -1845,11 +1845,11 @@ class EmbeddingsAndEvoformer(hk.Module):
       num_templ, num_res = batch['template_aatype'].shape
 
       # Embed the templates aatypes.
-      aatype_one_hot = jax.nn.one_hot(batch['template_aatype'], 22, axis=-1, dtype=msa_activations.dtype)
+      aatype_one_hot = jax.nn.one_hot(batch['template_aatype'], 23, axis=-1, dtype=msa_activations.dtype)
 
       # Embed the templates aatype, torsion angles and masks.
       # Shape (templates, residues, msa_channels)
-      ret = all_atom.atom37_to_torsion_angles(
+      ret = all_atom.atom41_to_torsion_angles(
           aatype=batch['template_aatype'],
           all_atom_pos=batch['template_all_atom_positions'],
           all_atom_mask=batch['template_all_atom_masks'],
@@ -1969,7 +1969,7 @@ class SingleTemplateEmbedding(hk.Module):
 
     to_concat = [template_dgram, template_mask_2d[:, :, None]]
 
-    aatype = jax.nn.one_hot(batch['template_aatype'], 22, axis=-1, dtype=dtype)
+    aatype = jax.nn.one_hot(batch['template_aatype'], 23, axis=-1, dtype=dtype)
 
     to_concat.append(jnp.tile(aatype[None, :, :], [num_res, 1, 1]))
     to_concat.append(jnp.tile(aatype[:, None, :], [1, num_res, 1]))
