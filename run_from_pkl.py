@@ -23,7 +23,8 @@ os.environ['CUDA_HOME']='/usr/local/cuda-11.1'
 os.environ['PATH'] = '/usr/local/cuda-11.1/bin:' + os.environ.get('PATH', '')
 os.environ['LD_LIBRARY_PATH'] = '/usr/local/cuda-11.1/lib64:' + os.environ.get('LD_LIBRARY_PATH', '')
 #############################
-
+os.environ['JAX_ENABLE_X64'] = 'True'  # Enable 64-bit mode
+os.environ['JAX_PLATFORM_NAME'] = 'gpu'  # Explicitly set platform
 import pickle
 
 from absl import app, flags, logging
@@ -101,6 +102,8 @@ def main(argv):
   for model_name, model_path in zip(FLAGS.model_names, FLAGS.model_paths):
     model_config = get_model_config(model_name, is_training=False)
     model_params = load_params(model_path)
+    print(f"Loaded params type: {type(model_params)}")
+    print(f"Params keys: {model_params.keys() if isinstance(model_params, dict) else 'not a dict'}")
     model_runner = RunModel(
        config=model_config,
        params=model_params,
