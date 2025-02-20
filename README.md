@@ -43,10 +43,7 @@ conda install -y -c nvidia cudnn==8.0.4
 ```
 
 
-
-
-
-
+python train.py
 
 
 
